@@ -413,6 +413,34 @@ function renderLearn(s){
 function bindPanel(){
   $$("[data-tab-jump]").forEach(b=>b.onclick=()=>setTab(b.dataset.tabJump));
   $$("[data-reveal]").forEach(b=>b.onclick=()=>{ const x=document.getElementById(b.dataset.reveal);x.hidden=false;b.disabled=true;});
+  $$("[data-pattern-error-pick]").forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.patternErrorPick;
+    const g=state.patternError;
+    if(!g) return;
+    $$("[data-pattern-error-pick]").forEach(x=>x.classList.remove("picked"));
+    b.classList.add("picked");
+    const fb=$("#patternErrorFeedback");
+    if(idx===g.wrongIndex){
+      b.classList.add("correct-fault");
+      fb.innerHTML=`<strong>أحسنت 🌟</strong> هذه هي العربة الخاطئة، لأن القطار يسير بقاعدة أزيد ${formatN(g.step)}.`;
+    }else{
+      fb.innerHTML=`ليست هذه العربة. جرّب عربة أخرى، وراقب الفرق بين الحدود.`;
+    }
+  });
+  if($("#revealPatternFix")) $("#revealPatternFix").onclick=()=>{
+    const g=state.patternError;
+    if(!g) return;
+    const btns=$$("[data-pattern-error-pick]");
+    const target=btns[g.wrongIndex];
+    if(target){
+      target.textContent=formatN(g.correct[g.wrongIndex]);
+      target.classList.add("fixed","picked");
+    }
+    const fix=$("#patternErrorFix");
+    fix.hidden=false;
+    fix.innerHTML=`القاعدة الصحيحة: <b>أزيد ${formatN(g.step)}</b> في كل مرة.<br>العربة الخاطئة كانت <b>${formatN(g.shown[g.wrongIndex])}</b>، والصحيح هو <b>${formatN(g.correct[g.wrongIndex])}</b>.`;
+  };
+  if($("#newPatternError")) $("#newPatternError").onclick=()=>setTab("error");
 }
 
 function renderTry(s){
@@ -825,7 +853,19 @@ function makeQuestion(skill, hard=false){
   const id=skill.id;
   if(id==="patterns"){
     const step=pick([2,5,10,-2,-5,-10]), start=rand(step<0?50:2,step<0?90:25), seq=[start,start+step,start+2*step,start+3*step], ans=start+4*step;
-    return {prompt:`أكمل النمط: ${seq.map(formatN).join(" ، ")} ، ؟`,options:shuffle([ans,ans+(step>0?5:-5),ans+(step>0?10:-10),ans-step]),answer:ans,hint:"احسب الفرق بين عددين متتاليين.",explain:`القاعدة هي ${step>0?"أزيد":"أنقص"} ${formatN(Math.abs(step))}.`};
+    const candidates=[ans, ans+step, ans-step, ans+(step>0?5:-5), ans+(step>0?10:-10), ans-(step>0?5:-5)];
+    const options=[...new Set(candidates)].filter(x=>x!==seq[3]).slice(0,4);
+    while(options.length<4) options.push(ans + rand(-3,3)*Math.max(2,Math.abs(step)));
+    if(!options.includes(ans)) options[0]=ans;
+    return {
+      prompt:`أكمل النمط: ${seq.map(formatN).join(" ، ")} ، ؟`,
+      options:shuffle([...new Set(options)]).slice(0,4),
+      answer:ans,
+      hint:"احسب الفرق بين كل عددين متتاليين.",
+      explain:`القاعدة هي ${step>0?"أزيد":"أنقص"} ${formatN(Math.abs(step))}.`,
+      seq, stepVal:step, engine:"🚂",
+      diffLabels:Array(4).fill(`${step>0?"+":"−"} ${formatN(Math.abs(step))}`)
+    };
   }
   if(id==="solve"){
     const opts=["أفهم","أخطط","أحل","أتحقق"];
@@ -862,6 +902,112 @@ function makeQuestion(skill, hard=false){
     return {prompt:`قرّب ${formatN(n)} إلى أقرب ألف.`,options:shuffle([...new Set([ans,Math.max(1000,ans-1000),ans+1000,Math.floor(n/1000)*1000])]).slice(0,4),answer:ans,hint:"انظر إلى منزلة المئات.",explain:`الألف الأقرب هو ${formatN(ans)}.`};
   }
 }
+
+function patternTrainTitle(type){
+  return type==="challenge" ? "🏆 تحدّي القطار الذهبي" : "🎯 تدريب القطار";
+}
+function renderPatternQuiz(qz,q){
+  const sceneClass = qz.type==="challenge" ? "pattern-quiz-scene challenge-scene" : "pattern-quiz-scene";
+  const engineClass = qz.type==="challenge" ? "engine-v16 challenge-engine" : "engine-v16";
+  $("#skillPanel").innerHTML=`<article class="pattern-game-card">
+    <div class="pattern-game-head">
+      <div>
+        <span class="eyebrow">🚂 ${qz.type==="challenge"?"قطار التحدي":"قطار التدريب"}</span>
+        <h3>${qz.type==="challenge"?"تحدّي القطار الذهبي":"أكمل عربة القطار"}</h3>
+        <p>${qz.type==="challenge"?"أكمل النمط بسرعة ودقة، واجمع أكبر عدد من النجوم.":"اكتشف القاعدة أولًا، ثم اختر العدد الذي يجب أن تحمله العربة الأخيرة."}</p>
+      </div>
+      <div class="pattern-meta">
+        <span>${qz.type==="challenge"?"🏆 تحدّي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span>
+        <span>⭐ النقاط: ${arNum(qz.score)}</span>
+      </div>
+    </div>
+
+    <div class="${sceneClass}">
+      <div class="train-rails"></div>
+      <div class="pattern-train-row">
+        <div class="train-wagon-v16 question" id="patternQuestionWagon">؟</div>
+        ${q.seq.map(n=>`<div class="train-wagon-v16">${formatN(n)}</div>`).join("")}
+        <div class="${engineClass}">🚂</div>
+      </div>
+    </div>
+
+    <div class="train-diff-row" id="patternDiffRow" hidden>${q.diffLabels.map(x=>`<span>${x}</span>`).join("")}</div>
+
+    <div class="pattern-option-grid" id="quizOptions">
+      ${q.options.map(o=>`<button class="option" data-answer="${o}">${formatN(o)}</button>`).join("")}
+    </div>
+
+    <div class="cta-row">
+      <button class="btn secondary" id="hintBtn">💡 ساعدني</button>
+      <button class="btn hidden" id="nextQ">التالي</button>
+    </div>
+    <div id="quizHint" class="hint-box" hidden></div>
+    <div id="quizFeedback" class="pattern-feedback-line" hidden></div>
+  </article>`;
+  $$("#quizOptions .option").forEach(b=>b.onclick=()=>answerQuiz(b,q));
+  $("#hintBtn").onclick=()=>{
+    const h=$("#quizHint");
+    h.hidden=false;
+    h.textContent=q.hint;
+    const d=$("#patternDiffRow");
+    if(d) d.hidden=false;
+  };
+  $("#nextQ").onclick=()=>{qz.index++;qz.answered=false;renderQuiz()};
+}
+function answerPatternQuiz(btn,q){
+  if(state.quiz.answered)return;
+  state.quiz.answered=true;
+  const chosen = +btn.dataset.answer;
+  const ok = chosen===+q.answer;
+  if(ok) state.quiz.score++;
+  const wagon=$("#patternQuestionWagon");
+  wagon.textContent=formatN(chosen);
+  wagon.classList.add(ok?"correct-fill":"wrong-fill");
+  btn.classList.add(ok?"correct":"wrong");
+  $$("#quizOptions .option").forEach(b=>{
+    if(+b.dataset.answer===+q.answer) b.classList.add("correct");
+  });
+  const d=$("#patternDiffRow");
+  if(d) d.hidden=false;
+  const f=$("#quizFeedback");
+  f.hidden=false;
+  f.innerHTML = ok
+    ? `<strong>أحسنت 🌟</strong> <span class="burst">✨</span> أكملت القطار بصورة صحيحة.<br>${q.explain}<div class="train-choice-tag">🚂 تحرّك القطار خطوة للأمام!</div>`
+    : `<strong>حاول مرة أخرى من القاعدة</strong><br>${q.explain}<div class="train-choice-tag">🔍 انظر إلى الفرق بين كل عربة والتي بعدها.</div>`;
+  $("#nextQ").classList.remove("hidden");
+}
+function makePatternErrorCase(){
+  const step=pick([2,5,10]);
+  const start=rand(5,25);
+  const correct=[start,start+step,start+2*step,start+3*step,start+4*step];
+  const wrongIndex=rand(1,3);
+  const shown=[...correct];
+  shown[wrongIndex]=shown[wrongIndex]+step;
+  return {step,start,shown,correct,wrongIndex};
+}
+function renderPatternErrorGame(){
+  state.patternError = makePatternErrorCase();
+  const g=state.patternError;
+  return `<article class="pattern-error-board">
+    <span class="eyebrow">🩺 عيادة الأنماط</span>
+    <h3>ابحث عن العربة الخاطئة</h3>
+    <p>في هذا القطار توجد عربة واحدة لا تتبع القاعدة. اضغط عليها أولًا، ثم شاهد التصحيح.</p>
+    <div class="pattern-error-train">
+      <div class="pattern-error-rails"></div>
+      <div class="pattern-error-row">
+        ${g.shown.map((n,i)=>`<button class="fault-wagon" data-pattern-error-pick="${i}">${formatN(n)}</button>`).join("")}
+        <div class="engine-v16">🚂</div>
+      </div>
+    </div>
+    <div class="error-actions">
+      <button class="btn secondary" id="revealPatternFix">أظهر التصحيح</button>
+      <button class="btn" id="newPatternError">جولة جديدة</button>
+    </div>
+    <div class="error-fix-box" id="patternErrorFeedback">💡 راقب الفرق بين كل عددين متتاليين، ثم حدّد العربة التي كسرت القاعدة.</div>
+    <div class="error-fix-box" id="patternErrorFix" hidden></div>
+  </article>`;
+}
+
 function normalizeAnswer(v){return typeof v==="number"?String(v):String(v);}
 function startQuiz(type="practice"){
   const count=type==="challenge"?7:5;
@@ -871,6 +1017,7 @@ function startQuiz(type="practice"){
 function renderQuiz(){
   const qz=state.quiz,q=qz.questions[qz.index];
   if(qz.index>=qz.count){finishQuiz();return}
+  if(state.skill.id==="patterns"){ renderPatternQuiz(qz,q); return; }
   $("#skillPanel").innerHTML=`<article class="practice-card">
     <div class="quiz-meta"><span>${qz.type==="challenge"?"🏆 تحدي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span><span>النقاط: ${arNum(qz.score)}</span></div>
     <div class="question">${q.prompt}</div>
@@ -883,6 +1030,7 @@ function renderQuiz(){
   $("#nextQ").onclick=()=>{qz.index++;qz.answered=false;renderQuiz()};
 }
 function answerQuiz(btn,q){
+  if(state.skill.id==="patterns"){ answerPatternQuiz(btn,q); return; }
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const raw=btn.dataset.answer, right=normalizeAnswer(q.answer), isNum=typeof q.answer==="number", ok=isNum?+raw===+q.answer:raw===right;
@@ -902,12 +1050,14 @@ function finishQuiz(){
     <span class="eyebrow">📊 نتيجة ${qz.type==="challenge"?"التحدي":"التدريب"}</span>
     <h3>${pct>=80?"أتقنت المهارة 🌟":pct>=60?"أنت قريب من الإتقان":"نحتاج جولة دعم قصيرة"}</h3>
     <div class="example-big">${arNum(pct)}٪</div>
+    ${state.skill.id==="patterns" ? `<div class="challenge-celebrate">${masteryStars(pct)}</div>` : ``}
     <p>${pct>=80?"انتقل إلى مهارة جديدة أو جرّب تحديًا أصعب.":"ارجع إلى «أفهمها» و«أجرّبها»، ثم أعد التدريب."}</p>
     <div class="cta-row"><button class="btn" id="retryQuiz">إعادة</button><button class="btn secondary" data-tab-jump="learn">مراجعة الشرح</button></div>
   </article>`;
   $("#retryQuiz").onclick=()=>startQuiz(qz.type); bindPanel();
 }
 function renderError(s){
+  if(s.id==="patterns") return renderPatternErrorGame();
   const e=s.teacher.error;
   let claim="";
   if(s.id==="place") claim="في العدد ٤٢٥، قيمة الرقم ٢ هي ٢.";
@@ -1109,6 +1259,29 @@ $("#closeMascotPanel")?.addEventListener("click", ()=> {
 $("#newMascotMessage")?.addEventListener("click", ()=> {
   setMascotMessage(mascotMessages[Math.floor(Math.random()*mascotMessages.length)]);
 });
+
+
+/* V1.6: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
+async function clearLegacyAppCache(){
+  try{
+    if("serviceWorker" in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r=>r.unregister()));
+    }
+    if("caches" in window){
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k=>caches.delete(k)));
+    }
+    const flagKey="cityNumbersCacheReset_160";
+    if(!sessionStorage.getItem(flagKey)){
+      sessionStorage.setItem(flagKey,"1");
+      console.log("City Numbers V1.6 cache cleaned.");
+    }
+  }catch(e){
+    console.warn("Cache cleanup skipped", e);
+  }
+}
+window.addEventListener("load", clearLegacyAppCache);
 
 /* تهيئة */
 renderStudent();
