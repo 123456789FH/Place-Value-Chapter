@@ -200,6 +200,32 @@ const skillShortDesc = {
   round1000: "اختر الألف الأقرب للوصول إلى البرج."
 };
 
+const skillThemes = {
+  patterns:{scene:"🚂", badge:"لعبة الأنماط", accent:"#ffd264", a:"#1f4164", b:"#50679f", glow:"rgba(255,210,100,.18)", msg:"راقب الفرق بين الأعداد داخل عربات القطار، ثم أكمل النمط."},
+  solve:{scene:"🕵️", badge:"مكتب التحقيق", accent:"#cdc2ff", a:"#22345b", b:"#4b4e89", glow:"rgba(205,194,255,.18)", msg:"نحل المسألة مثل المحقق الصغير: أفهم، أخطط، أحل، ثم أتحقق."},
+  place:{scene:"🏗️", badge:"برج المنازل", accent:"#79e7c6", a:"#1f3f52", b:"#476d80", glow:"rgba(121,231,198,.20)", msg:"ضع كل رقم في منزله الصحيح، ثم اكتشف قيمة كل رقم داخل العدد."},
+  thousands:{scene:"🏙️", badge:"حي الألوف", accent:"#9ce3ff", a:"#1e4060", b:"#4d7394", glow:"rgba(156,227,255,.20)", msg:"في هذه المحطة ستقرأ الأعداد ضمن الألوف وتكتبها وتحللها."},
+  tenThousands:{scene:"🌆", badge:"مدينة كبيرة", accent:"#cdbfff", a:"#2d3f69", b:"#5d6ab1", glow:"rgba(205,191,255,.20)", msg:"ابدأ من أكبر منزلة، وسمِّ كل منزلة بوضوح حتى عشرات الألوف."},
+  compare:{scene:"⚖️", badge:"جسر الأعداد", accent:"#91e4ff", a:"#1d4260", b:"#496b95", glow:"rgba(145,228,255,.20)", msg:"قارن من أكبر منزلة، ثم ضع الرمز الصحيح على جسر المقارنة."},
+  order:{scene:"🏁", badge:"سباق الأعداد", accent:"#ffbfd7", a:"#3c335d", b:"#7a5887", glow:"rgba(255,191,215,.18)", msg:"اكتشف العدد الأصغر أو الأكبر، ثم رتب الأعداد على المضمار."},
+  round10_100:{scene:"🎯", badge:"ساحة التقريب", accent:"#f3c96b", a:"#4a3a22", b:"#7a6135", glow:"rgba(243,201,107,.20)", msg:"انظر إلى الرقم الذي على يمين منزلة التقريب قبل أن تقرر."},
+  round1000:{scene:"🏰", badge:"برج الألف", accent:"#ffe28e", a:"#504020", b:"#8b7036", glow:"rgba(255,226,142,.20)", msg:"ابحث عن الألف الأقرب، ثم قرر إلى أي ألف سيذهب العدد."}
+};
+
+function themeFor(id){
+  return skillThemes[id] || skillThemes.place;
+}
+function masteryStars(value){
+  const n = value>=90 ? 5 : value>=80 ? 4 : value>=60 ? 3 : value>=40 ? 2 : value>0 ? 1 : 0;
+  return Array.from({length:5}, (_,i)=>`<span>${i<n?"⭐":"☆"}</span>`).join("");
+}
+function nextSkillRec(){
+  const entries = skills.map(s=>({skill:s, score:mastery[s.id]||0}));
+  const unfinished = entries.filter(x=>x.score<80).sort((a,b)=>a.score-b.score);
+  return unfinished[0]?.skill || skills[0];
+}
+
+
 
 
 const $ = s=>document.querySelector(s);
@@ -218,6 +244,7 @@ function go(id){
   if(id==="studentScreen") renderFeaturedGames();
 renderHomeGames();
 renderStudent();
+$$(".mode-card").forEach(x=>x.classList.toggle("selected",x.dataset.mode===state.mode));
   if(id==="teacherScreen") renderTeacher();
   if(id==="clinicScreen") renderClinic();
   if(id==="challengeScreen") startChallenge();
@@ -285,17 +312,32 @@ function renderHomeGames(){
 
 function renderStudent(){
   const ov=overall(), deg=Math.round(ov*3.6);
+  const finished=skills.filter(s=>(mastery[s.id]||0)>=80).length;
+  const next=nextSkillRec();
   $("#overallRing").style.background=`conic-gradient(var(--gold) ${deg}deg,rgba(255,255,255,.08) 0)`;
   $("#overallRing b").textContent=arNum(ov)+"٪";
   if($("#mascotLine")) $("#mascotLine").textContent = modeLines[state.mode] || modeLines.learn;
+  if($("#studentProgressText")) $("#studentProgressText").textContent = state.mode==="learn" ? "أنت الآن في طريق الفهم. اختر محطة وابدأ من الفكرة الأساسية." : state.mode==="practice" ? "أنت الآن في طريق التدريب. اختر محطة وابدأ بأسئلة متدرجة." : "أنت الآن في طريق التحدي. اختر محطة واختبر نفسك.";
+  if($("#studentSummaryChips")) $("#studentSummaryChips").innerHTML = `
+    <span class="chip">🏁 محطات منجزة: ${arNum(finished)} / ${arNum(skills.length)}</span>
+    <span class="chip">⭐ مستوى الإتقان العام: ${arNum(ov)}٪</span>
+    <span class="chip">🎯 طريقك الحالي: ${state.mode==="learn"?"الفهم":state.mode==="practice"?"التدريب":"التحدي"}</span>
+  `;
+  if($("#studentNextSkillTitle")) $("#studentNextSkillTitle").textContent = next.place;
+  if($("#studentNextSkillDesc")) $("#studentNextSkillDesc").textContent = next.subtitle;
+  $("#goNextSkillBtn").onclick=()=>openSkill(next.id,state.mode);
+
   renderFeaturedGames();
   renderHomeGames();
   $("#skillMap").innerHTML=skills.map((s,i)=>{
     const m=mastery[s.id]||0;
-    return `<button class="skill-card ${m>=80?"done":""}" data-skill="${s.id}">
+    const tags = homeGameTags[s.id] || ["تعلّم","العب"];
+    return `<button class="skill-card theme-${s.id} ${m>=80?"done":""}" data-skill="${s.id}">
       <span class="num">${arNum(i+1)}</span><span class="icon">${s.icon}</span>
       <b>${s.place}</b><small>${s.title}</small>
       <div class="progress"><i style="width:${m}%"></i></div>
+      <div class="skill-stars">${masteryStars(m)}</div>
+      <div class="skill-bubble">${s.icon} ${tags[0]} • ${tags[1]}</div>
       <div class="game-footer"><small>${m?`إتقانك: ${arNum(m)}٪`:"ابدأ من هنا"}</small><span class="play-btn">العب الآن</span></div>
     </button>`;
   }).join("");
@@ -305,6 +347,7 @@ $$(".mode-card").forEach(b=>b.onclick=()=>{
   state.mode=b.dataset.mode;
   $$(".mode-card").forEach(x=>x.classList.toggle("selected",x===b));
   if($("#mascotLine")) $("#mascotLine").textContent = modeLines[state.mode] || modeLines.learn;
+  renderStudent();
   toast(state.mode==="learn"?"اختر مهارة لتبدأ بالفهم":state.mode==="practice"?"اختر مهارة لبدء التدريب":"اختر مهارة لبدء التحدي");
 });
 
@@ -318,10 +361,19 @@ function openSkill(id,mode="learn"){
   state.skill=skills.find(s=>s.id===id)||skills[0];
   state.mode=mode;
   state.tab = mode==="practice"?"practice":mode==="challenge"?"challenge":"learn";
+  const t = themeFor(state.skill.id);
   $("#skillKicker").textContent=state.skill.place;
   $("#skillTitle").textContent=state.skill.title;
   $("#skillSubtitle").textContent=state.skill.subtitle;
   $("#skillBadge").textContent=state.skill.icon;
+  $("#skillSceneIcon").textContent=t.scene;
+  $("#skillSceneBadge").textContent=t.badge;
+  $("#skillMascotText").textContent=t.msg;
+  $("#skillMiniScore").textContent=arNum(mastery[state.skill.id]||0)+"٪";
+  const world=$("#skillWorld");
+  world.style.setProperty("--themeA", t.a);
+  world.style.setProperty("--themeB", t.b);
+  world.style.setProperty("--themeGlow", t.glow);
   go("skillScreen");
   setTab(state.tab);
 }
@@ -332,6 +384,7 @@ $("#skillTabs").onclick=e=>{
 function setTab(tab){
   state.tab=tab;
   $$("#skillTabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+  $("#skillMiniScore").textContent=arNum(mastery[state.skill.id]||0)+"٪";
   const p=$("#skillPanel");
   if(tab==="learn") p.innerHTML=renderLearn(state.skill);
   if(tab==="try"){p.innerHTML=renderTry(state.skill); bindTry();}
@@ -342,12 +395,15 @@ function setTab(tab){
   bindPanel();
 }
 function renderLearn(s){
+  const t=themeFor(s.id);
   return `<article class="lesson-card">
     <span class="eyebrow">${s.icon} الفكرة الأساسية</span>
     <h3>${s.title}</h3>
     <p>${s.subtitle}</p>
     <div class="rule-box"><b>قاعدة سهلة:</b><br>${s.rule}</div>
-    <div class="example-box"><b>مثال:</b><div class="example-big">${s.example}</div></div>${["place","thousands","tenThousands"].includes(s.id)?`<div class="place-hero-tip">🏗️ في هذه المحطة ستبني العدد داخل برج المنازل، ثم تكتشف قيمة كل رقم.</div>`:""}
+    <div class="example-box"><b>مثال:</b><div class="example-big">${s.example}</div></div>
+    <div class="student-achievement">${t.scene} ${t.msg}</div>
+    ${["place","thousands","tenThousands"].includes(s.id)?`<div class="place-hero-tip">🏗️ في هذه المحطة ستبني العدد داخل برج المنازل، ثم تكتشف قيمة كل رقم.</div>`:""}
     <div class="cta-row">
       <button class="btn mint" data-tab-jump="try">🧪 جرّبها بيدك</button>
       <button class="btn secondary" data-tab-jump="practice">🎯 ابدأ التدريب</button>
@@ -881,10 +937,20 @@ function errorFixFor(id){
 }
 function renderMastery(s){
   const m=mastery[s.id]||0;
-  return `<article class="mastery-card"><span class="eyebrow">📊 بطاقة الإتقان</span><h3>${s.title}</h3>
-    <div class="example-big">${arNum(m)}٪</div>
-    <div class="m-bar" style="height:16px;margin:15px 0"><i style="width:${m}%"></i></div>
-    <p>${m>=80?"المهارة في مستوى الإتقان. حافظ على التدريب المتباعد.":m? "أعد التدريب حتى تصل إلى ٨٠٪ فأكثر.":"لم تسجل نتيجة بعد. ابدأ بتدريب قصير من ٥ أسئلة."}</p>
+  const title = m>=80 ? "ممتاز! وصلت إلى مستوى الإتقان" : m>=60 ? "أنت قريب من الإتقان" : m>0 ? "واصل التدريب وستتقدم" : "ابدأ أول تدريب لك";
+  const caption = m>=80 ? "أحسنت 🌟 حافظ على هذا المستوى بالتدريب المتباعد." : m>=60 ? "جرّب جولة تدريب جديدة حتى تصل إلى ٨٠٪ فأكثر." : m>0 ? "ابدأ من الفهم ثم التدريب، وبعدها أعد التحدي." : "لم تُسجل نتيجة بعد. ابدأ من التدريب أو التجربة العملية.";
+  return `<article class="mastery-card"><span class="eyebrow">⭐ بطاقة الإتقان</span><h3>${s.title}</h3>
+    <div class="mastery-celebration">
+      <div class="mastery-trophy">${m>=80?"🏆":m>=60?"⭐":"🎒"}</div>
+      <div>
+        <div class="example-big">${arNum(m)}٪</div>
+        <b>${title}</b>
+        <div class="mastery-stars">${masteryStars(m)}</div>
+      </div>
+    </div>
+    <div class="m-bar" style="height:18px;margin:15px 0"><i style="width:${m}%"></i></div>
+    <p class="mastery-caption">${caption}</p>
+    <div class="student-achievement">🎯 هدفك القادم: ${m>=80?"حافظ على الإتقان وراجع بعد يومين.":"واصل حتى تصل إلى ٨٠٪ أو أكثر."}</div>
     <div class="cta-row"><button class="btn" data-tab-jump="practice">ابدأ التدريب</button><button class="btn secondary" data-tab-jump="learn">راجع الفكرة</button></div>
   </article>`;
 }

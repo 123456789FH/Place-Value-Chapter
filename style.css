@@ -1069,3 +1069,538 @@ footer:before{
   .train-row{flex-wrap:wrap}
   .engine{width:92px; height:76px}
 }
+
+
+/* ===== V1.5 | تجديد بوابة الطالب بالكامل ===== */
+:root{
+  --student-accent:#79e7c6;
+  --student-accent-soft:rgba(121,231,198,.14);
+  --student-gold:#f3c96b;
+  --student-pink:#ffbfd7;
+  --student-blue:#9ce3ff;
+  --student-lav:#cdc2ff;
+}
+
+#studentScreen{
+  background:
+    radial-gradient(circle at 12% 10%, rgba(121,231,198,.10), transparent 18%),
+    radial-gradient(circle at 85% 16%, rgba(243,201,107,.10), transparent 20%);
+  border-radius:34px;
+}
+.student-world{
+  display:grid;
+  gap:18px;
+}
+.student-world-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+}
+.student-hero-card{
+  display:grid;
+  grid-template-columns: minmax(250px, .92fr) minmax(300px, 1.08fr);
+  gap:22px;
+  align-items:center;
+  padding:24px;
+  border-radius:32px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.06)),
+    radial-gradient(circle at 86% 15%, rgba(255,191,215,.10), transparent 18%),
+    radial-gradient(circle at 16% 14%, rgba(121,231,198,.10), transparent 18%);
+}
+.student-hero-illustration{
+  position:relative;
+  min-height:280px;
+  border-radius:28px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  background:
+    linear-gradient(180deg, rgba(183,235,255,.88), rgba(113,152,236,.65)),
+    radial-gradient(circle at 50% 10%, rgba(255,255,255,.34), transparent 22%);
+}
+.student-sky-decor{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255,226,116,.98), transparent 10%),
+    radial-gradient(circle at 18% 80%, rgba(255,255,255,.14), transparent 14%),
+    radial-gradient(circle at 78% 86%, rgba(255,255,255,.12), transparent 12%);
+}
+.student-sky-decor:before,
+.student-sky-decor:after{
+  content:"";
+  position:absolute;
+  width:120px;
+  height:34px;
+  border-radius:999px;
+  background:rgba(255,255,255,.76);
+  box-shadow:0 10px 16px rgba(0,0,0,.05);
+}
+.student-sky-decor:before{top:34px; right:18px}
+.student-sky-decor:after{top:70px; left:22px}
+.student-sky-decor:before{transform:scale(1)}
+.student-sky-decor:after{transform:scale(.82)}
+.big-student-mascot{
+  position:relative;
+  z-index:2;
+  width:min(360px, 95%);
+  margin-top:18px;
+}
+.student-hero-copy h3{
+  font-size:34px;
+  margin:10px 0;
+}
+.student-hero-copy p{
+  font-size:19px;
+  line-height:1.9;
+  color:#e8efff;
+}
+.student-mini-stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:16px 0 18px;
+}
+.student-mini-stats .chip{
+  padding:10px 14px;
+  border-radius:999px;
+  font-size:14px;
+  font-weight:800;
+  background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.15);
+}
+.journey-guide{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:16px;
+  align-items:center;
+  padding:18px 20px;
+  border-radius:26px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.06)),
+    radial-gradient(circle at 80% 10%, rgba(243,201,107,.08), transparent 18%);
+}
+.journey-guide h3{
+  margin:8px 0;
+  font-size:26px;
+}
+.journey-guide-text p{
+  color:var(--muted);
+  line-height:1.8;
+  margin:0;
+}
+.journey-steps-mini{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:flex-end;
+}
+.journey-steps-mini span{
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
+  font-weight:800;
+  font-size:14px;
+}
+.student-mode-grid{
+  grid-template-columns: repeat(3, 1fr);
+}
+.learn-card{
+  background:
+    linear-gradient(145deg, rgba(121,231,198,.26), rgba(255,255,255,.08)),
+    radial-gradient(circle at 18% 16%, rgba(255,255,255,.17), transparent 18%);
+}
+.practice-card{
+  background:
+    linear-gradient(145deg, rgba(156,227,255,.26), rgba(255,255,255,.08)),
+    radial-gradient(circle at 18% 16%, rgba(255,255,255,.17), transparent 18%);
+}
+.challenge-card{
+  background:
+    linear-gradient(145deg, rgba(243,201,107,.24), rgba(255,255,255,.08)),
+    radial-gradient(circle at 18% 16%, rgba(255,255,255,.17), transparent 18%);
+}
+.mode-card.selected{
+  border-color:rgba(243,201,107,.55);
+  box-shadow:0 14px 30px rgba(243,201,107,.12);
+}
+.next-stop-card{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:18px 20px;
+  border-radius:26px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.06)),
+    radial-gradient(circle at 88% 12%, rgba(121,231,198,.08), transparent 18%);
+}
+.next-stop-copy h3{
+  margin:8px 0;
+  font-size:28px;
+}
+.next-stop-copy p{
+  color:var(--muted);
+  margin:0;
+}
+.playful-skill-map{
+  grid-template-columns: repeat(3, 1fr);
+}
+.playful-skill-map .skill-card{
+  min-height:214px;
+  padding-bottom:14px;
+  border-radius:30px;
+  position:relative;
+  overflow:hidden;
+}
+.playful-skill-map .skill-card::after{
+  content:"";
+  position:absolute;
+  width:134px;
+  height:134px;
+  border-radius:50%;
+  left:-38px;
+  bottom:-38px;
+  background:var(--cardAccent, rgba(255,255,255,.10));
+  opacity:.34;
+}
+.skill-card .skill-stars{
+  display:flex;
+  gap:4px;
+  margin-top:10px;
+}
+.skill-card .skill-stars span{
+  font-size:14px;
+}
+.skill-card .skill-bubble{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  background:rgba(255,255,255,.09);
+}
+.skill-card .game-footer{
+  margin-top:auto;
+}
+.skill-card .play-btn{
+  padding:8px 12px;
+  border-radius:14px;
+}
+.skill-card.theme-patterns{--cardAccent:rgba(255,210,100,.34)}
+.skill-card.theme-solve{--cardAccent:rgba(205,194,255,.30)}
+.skill-card.theme-place{--cardAccent:rgba(121,231,198,.34)}
+.skill-card.theme-thousands{--cardAccent:rgba(156,227,255,.34)}
+.skill-card.theme-tenThousands{--cardAccent:rgba(186,168,255,.34)}
+.skill-card.theme-compare{--cardAccent:rgba(145,228,255,.34)}
+.skill-card.theme-order{--cardAccent:rgba(255,191,215,.34)}
+.skill-card.theme-round10_100{--cardAccent:rgba(243,201,107,.34)}
+.skill-card.theme-round1000{--cardAccent:rgba(255,226,142,.34)}
+
+#skillScreen{
+  --themeA:#20365f;
+  --themeB:#374d7e;
+  --themeGlow:rgba(121,231,198,.16);
+  --themePill:rgba(255,255,255,.10);
+}
+.student-skill-world{
+  display:grid;
+  grid-template-columns: minmax(320px,1.18fr) minmax(230px,.82fr);
+  gap:20px;
+  align-items:center;
+  padding:22px;
+  border-radius:32px;
+  background:
+    radial-gradient(circle at 84% 14%, var(--themeGlow), transparent 22%),
+    linear-gradient(145deg, var(--themeA), var(--themeB));
+  box-shadow:0 20px 44px rgba(0,0,0,.16);
+}
+.student-skill-copy h2{
+  font-size:clamp(34px, 5vw, 66px);
+  margin:8px 0;
+}
+.student-skill-copy p{
+  color:#edf4ff;
+  font-size:21px;
+  line-height:1.8;
+}
+.skill-scene-badge{
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.90);
+  color:#27415f;
+  font-size:13px;
+  font-weight:900;
+}
+.skill-route-mini{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:16px;
+}
+.skill-route-mini span{
+  padding:9px 12px;
+  border-radius:16px;
+  background:var(--themePill);
+  border:1px solid rgba(255,255,255,.15);
+  font-weight:800;
+  font-size:14px;
+}
+.student-skill-side{
+  display:grid;
+  gap:14px;
+}
+.skill-icon-stage{
+  position:relative;
+  min-height:210px;
+  border-radius:26px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:
+    linear-gradient(180deg, rgba(203,241,255,.60), rgba(93,131,235,.45)),
+    radial-gradient(circle at 50% 10%, rgba(255,255,255,.32), transparent 22%);
+}
+.skill-icon-stage::before{
+  content:"";
+  position:absolute;
+  left:8%;
+  right:8%;
+  bottom:20px;
+  height:20px;
+  border-radius:999px;
+  background:rgba(45,68,103,.34);
+}
+.skill-badge{
+  position:relative;
+  z-index:2;
+  width:120px;
+  height:120px;
+  border-radius:34px !important;
+  background:rgba(255,255,255,.92) !important;
+  color:#254160 !important;
+  display:grid;
+  place-items:center;
+  font-size:54px !important;
+  box-shadow:0 16px 30px rgba(0,0,0,.12);
+}
+.skill-scene-icon{
+  position:absolute;
+  top:16px;
+  right:16px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.88);
+  color:#27415f;
+  font-weight:900;
+}
+.skill-side-note{
+  padding:16px 18px;
+  border-radius:24px;
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.15);
+}
+.skill-side-note b{
+  display:block;
+  margin-bottom:8px;
+  font-size:18px;
+}
+.skill-side-note p{
+  color:#ebf2ff;
+  line-height:1.9;
+  margin:0 0 10px;
+}
+.skill-mini-score{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:82px;
+  height:44px;
+  padding:0 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,.90);
+  color:#284262;
+  font-weight:900;
+  font-size:20px;
+}
+.student-journey-tabs{
+  display:grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap:10px;
+  margin-top:16px;
+}
+.student-journey-tabs button{
+  min-height:92px;
+  padding:12px;
+  border-radius:24px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
+  display:grid;
+  place-items:center;
+  text-align:center;
+  gap:4px;
+  border:1px solid rgba(255,255,255,.12);
+}
+.student-journey-tabs button span{
+  font-size:24px;
+}
+.student-journey-tabs button b{
+  font-size:18px;
+}
+.student-journey-tabs button small{
+  color:var(--muted);
+  font-size:12px;
+}
+.student-journey-tabs button.active{
+  background:
+    linear-gradient(145deg, rgba(243,201,107,.98), rgba(232,182,80,.92));
+  color:#1c2740;
+  border-color:rgba(243,201,107,.6);
+  box-shadow:0 14px 30px rgba(243,201,107,.18);
+}
+.student-journey-tabs button.active small{
+  color:#3a465e;
+}
+.student-tab-panel{
+  margin-top:16px;
+}
+.student-panel-box,
+.lesson-card,
+.try-card,
+.quiz-card,
+.error-card,
+.mastery-card{
+  border-radius:28px !important;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.13), rgba(255,255,255,.06)),
+    radial-gradient(circle at 88% 10%, rgba(121,231,198,.06), transparent 16%);
+  border:1px solid rgba(255,255,255,.11);
+}
+.lesson-card h3,
+.try-card h3,
+.quiz-card h3,
+.error-card h3,
+.mastery-card h3{
+  font-size:34px;
+}
+.lesson-card p,
+.try-card p,
+.error-card p,
+.mastery-card p{
+  font-size:18px;
+  line-height:1.9;
+}
+.rule-box,
+.example-box,
+.feedback{
+  border-radius:20px !important;
+}
+.mastery-card{
+  position:relative;
+  overflow:hidden;
+}
+.mastery-card::before{
+  content:"";
+  position:absolute;
+  width:170px;
+  height:170px;
+  border-radius:50%;
+  left:-40px;
+  top:-40px;
+  background:rgba(243,201,107,.18);
+}
+.mastery-celebration{
+  display:grid;
+  grid-template-columns: auto 1fr;
+  gap:18px;
+  align-items:center;
+  margin:16px 0;
+}
+.mastery-trophy{
+  width:110px;
+  height:110px;
+  border-radius:28px;
+  display:grid;
+  place-items:center;
+  font-size:54px;
+  background:linear-gradient(145deg, rgba(243,201,107,.98), rgba(236,180,65,.92));
+  color:#2b364e;
+  box-shadow:0 14px 28px rgba(243,201,107,.16);
+}
+.mastery-stars{
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+  flex-wrap:wrap;
+}
+.mastery-stars span{
+  font-size:20px;
+}
+.mastery-caption{
+  color:var(--muted);
+  line-height:1.9;
+}
+.student-achievement{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(121,231,198,.10);
+  border:1px solid rgba(121,231,198,.18);
+  color:#d7fbef;
+  font-weight:800;
+  margin-top:10px;
+}
+
+@media(max-width:1050px){
+  .student-hero-card,
+  .student-skill-world{
+    grid-template-columns:1fr;
+  }
+  .student-journey-tabs{
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .playful-skill-map{
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .student-mode-grid{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:700px){
+  .student-world-head,
+  .journey-guide,
+  .next-stop-card{
+    grid-template-columns:1fr;
+    display:grid;
+  }
+  .student-world-head{
+    gap:10px;
+  }
+  .journey-steps-mini,
+  .skill-route-mini{
+    justify-content:flex-start;
+  }
+  .playful-skill-map,
+  .student-journey-tabs{
+    grid-template-columns:1fr;
+  }
+  .mastery-celebration{
+    grid-template-columns:1fr;
+  }
+  .student-hero-copy h3,
+  .next-stop-copy h3{
+    font-size:26px;
+  }
+  .student-skill-copy p{
+    font-size:18px;
+  }
+}

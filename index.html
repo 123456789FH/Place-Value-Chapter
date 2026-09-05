@@ -124,69 +124,122 @@
       </section>
 
 
+      
       <!-- بوابة الطالب -->
       <section class="screen" id="studentScreen">
-        <div class="section-head">
-          <div>
-            <span class="eyebrow">🎒 بوابة الطالب</span>
-            <h2>أهلًا بك في مدينة الأعداد</h2>
-            <p>اختر طريقك، ثم ابدأ من المهارة التي تحتاجها.</p>
+        <div class="student-world">
+          <div class="student-world-head">
+            <div>
+              <span class="eyebrow">🎒 بوابة الطالب</span>
+              <h2>أهلًا بك في مدينة الأعداد</h2>
+              <p>بوابة طفولية متكاملة: افهم، ثم جرّب، ثم أتقن.</p>
+            </div>
+            <div class="mastery-ring" id="overallRing"><b>٠٪</b><small>إتقان عام</small></div>
           </div>
-          <div class="mastery-ring" id="overallRing"><b>٠٪</b><small>إتقان عام</small></div>
-        </div>
 
-        <div class="student-welcome-card glass">
-          <div class="student-welcome-text">
-            <span class="eyebrow">🌟 رفيقا الرحلة</span>
-            <h3>راشد وبسمة يرافقانك في التعلم</h3>
-            <p id="mascotLine">ابدأ من «أريد أن أفهم»، ثم انتقل إلى التدريب والتحدي بالتدرج.</p>
-            <div class="cta-row">
-              <button class="btn mint" id="mascotTipBtn">💡 نصيحة من راشد وبسمة</button>
+          <div class="student-hero-card glass">
+            <div class="student-hero-illustration">
+              <div class="student-sky-decor"></div>
+              <img class="student-mascot-image big-student-mascot" src="./assets/rashid-basmah.png" alt="الشخصيتان راشد وبسمة" />
+            </div>
+            <div class="student-hero-copy">
+              <span class="eyebrow">🌟 رفيقا الرحلة</span>
+              <h3>راشد وبسمة يرافقانك خطوة خطوة</h3>
+              <p id="mascotLine">ابدأ بالفهم، ثم جرّب المهارة بيدك، وبعدها انتقل إلى التدريب والتحدي.</p>
+              <div class="student-mini-stats" id="studentSummaryChips"></div>
+              <div class="cta-row">
+                <button class="btn mint" id="mascotTipBtn">💡 نصيحة من راشد وبسمة</button>
+              </div>
             </div>
           </div>
-          <img class="student-mascot-image" src="./assets/rashid-basmah.png" alt="الشخصيتان راشد وبسمة" />
-        </div>
 
-        <div class="mode-grid">
-          <button class="mode-card" data-mode="learn">
-            <span>🌱</span><b>أريد أن أفهم</b><small>شرح بصري وتجربة قصيرة</small>
-          </button>
-          <button class="mode-card" data-mode="practice">
-            <span>🎯</span><b>أريد أن أتدرّب</b><small>تدريب متدرج مع مساعدة</small>
-          </button>
-          <button class="mode-card" data-mode="challenge">
-            <span>🏆</span><b>أتحدّى نفسي</b><small>أسئلة متنوعة لقياس الإتقان</small>
-          </button>
-        </div>
+          <div class="journey-guide glass">
+            <div class="journey-guide-text">
+              <span class="eyebrow">🧭 مسار الرحلة</span>
+              <h3>طريقك داخل كل مهارة</h3>
+              <p id="studentProgressText">ابدأ من «أفهم»، ثم «أجرّب»، ثم «أتدرّب»، وبعدها «أتحدّى» و«إتقاني».</p>
+            </div>
+            <div class="journey-steps-mini">
+              <span>💡 أفهم</span>
+              <span>🧪 أجرّب</span>
+              <span>🎯 أتدرّب</span>
+              <span>🏆 أتحدّى</span>
+              <span>⭐ إتقاني</span>
+            </div>
+          </div>
 
-        <div class="subhead" id="skillsMap">
-          <div><span>🗺️</span><b>خريطة رحلتي</b></div>
-          <small>كل محطة تمثل مهارة أساسية في الفصل.</small>
+          <div class="mode-grid student-mode-grid">
+            <button class="mode-card learn-card" data-mode="learn">
+              <span>🌱</span><b>أريد أن أفهم</b><small>شرح بصري ومثال واضح</small>
+            </button>
+            <button class="mode-card practice-card" data-mode="practice">
+              <span>🎯</span><b>أريد أن أتدرّب</b><small>أسئلة متدرجة مع مساعدة</small>
+            </button>
+            <button class="mode-card challenge-card" data-mode="challenge">
+              <span>🏆</span><b>أتحدّى نفسي</b><small>تحديات لقياس الإتقان</small>
+            </button>
+          </div>
+
+          <div class="next-stop-card glass">
+            <div class="next-stop-copy">
+              <span class="eyebrow">🚦 محطتي المقترحة</span>
+              <h3 id="studentNextSkillTitle">ابدأ رحلتك من أول محطة</h3>
+              <p id="studentNextSkillDesc">سنقترح عليك المهارة الأنسب بناءً على مستوى الإتقان.</p>
+            </div>
+            <button class="btn" id="goNextSkillBtn">انطلق إلى المحطة</button>
+          </div>
+
+          <div class="subhead" id="skillsMap">
+            <div><span>🗺️</span><b>خريطة رحلتي</b></div>
+            <small>كل محطة لعبة مستقلة داخل مدينة الأعداد.</small>
+          </div>
+          <div class="skill-map playful-skill-map" id="skillMap"></div>
         </div>
-        <div class="skill-map" id="skillMap"></div>
       </section>
 
+
+      
       <!-- شاشة المهارة -->
       <section class="screen" id="skillScreen">
-        <div class="skill-hero">
-          <div>
+        <div class="student-skill-world glass" id="skillWorld">
+          <div class="student-skill-copy">
+            <div class="skill-scene-badge" id="skillSceneBadge">🎮 لعبة مستقلة</div>
             <span class="eyebrow" id="skillKicker">المحطة</span>
             <h2 id="skillTitle">المهارة</h2>
             <p id="skillSubtitle"></p>
+            <div class="skill-route-mini">
+              <span>💡 أفهم</span>
+              <span>🧪 أجرّب</span>
+              <span>🎯 أتدرّب</span>
+              <span>🏆 أتحدّى</span>
+              <span>⭐ إتقاني</span>
+            </div>
           </div>
-          <div class="skill-badge" id="skillBadge">١</div>
+
+          <div class="student-skill-side">
+            <div class="skill-icon-stage" id="skillBadgeWrap">
+              <div class="skill-badge" id="skillBadge">١</div>
+              <div class="skill-scene-icon" id="skillSceneIcon">🎮</div>
+            </div>
+            <div class="skill-side-note">
+              <b id="skillMascotTitle">رسالة من راشد وبسمة</b>
+              <p id="skillMascotText">ابدأ بالفهم ثم انتقل للتجربة العملية حتى تتضح الفكرة.</p>
+              <div class="skill-mini-score" id="skillMiniScore">٠٪</div>
+            </div>
+          </div>
         </div>
 
-        <div class="tabs" id="skillTabs">
-          <button class="active" data-tab="learn">💡 أفهمها</button>
-          <button data-tab="try">🧪 أجرّبها</button>
-          <button data-tab="practice">🎯 أتدرّب</button>
-          <button data-tab="error">🩺 أصلح الخطأ</button>
-          <button data-tab="challenge">🏆 أتحدّى</button>
-          <button data-tab="mastery">📊 إتقاني</button>
+        <div class="tabs student-journey-tabs" id="skillTabs">
+          <button class="active" data-tab="learn"><span>💡</span><b>أفهم</b><small>الفكرة</small></button>
+          <button data-tab="try"><span>🧪</span><b>أجرّب</b><small>تطبيق</small></button>
+          <button data-tab="practice"><span>🎯</span><b>أتدرّب</b><small>تمرين</small></button>
+          <button data-tab="error"><span>🩺</span><b>أصلح</b><small>الخطأ</small></button>
+          <button data-tab="challenge"><span>🏆</span><b>أتحدّى</b><small>الاختبار</small></button>
+          <button data-tab="mastery"><span>⭐</span><b>إتقاني</b><small>النتيجة</small></button>
         </div>
-        <div class="tab-panel" id="skillPanel"></div>
+        <div class="tab-panel student-tab-panel" id="skillPanel"></div>
       </section>
+
 
       <!-- بوابة المعلم -->
       <section class="screen" id="teacherScreen">
