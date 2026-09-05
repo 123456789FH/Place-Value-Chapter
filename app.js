@@ -246,7 +246,7 @@ function bindPanel(){
 }
 
 function renderTry(s){
-  if(["place","thousands","tenThousands"].includes(s.id)) return tryPlace(s);
+  if(["place","thousands","tenThousands"].includes(s.id)) return tryPlaceTower(s);
   if(s.id==="patterns") return tryPattern();
   if(s.id==="compare") return tryCompare();
   if(s.id==="order") return tryOrder();
@@ -259,17 +259,297 @@ function renderTry(s){
     <div class="cta-row"><button class="btn" id="checkSteps">تحقق</button><button class="btn secondary" id="resetSteps">إعادة</button></div>
   </article>`;
 }
-function tryPlace(s){
-  const digitsCount=s.id==="tenThousands"?5:s.id==="thousands"?4:3;
-  let min=10**(digitsCount-1), max=10**digitsCount-1, n=rand(min,max);
-  return `<article class="try-card" data-number="${n}">
-    <span class="eyebrow">🏗️ مختبر المنازل</span><h3>المس الرقم الذي تريد فحصه</h3>
-    <p>سنُظهر لك اسم منزلته وقيمته داخل العدد.</p>
-    <div class="example-big" id="placeNumber">${formatN(n)}</div>
-    <div class="number-pick" id="digitPick">${String(n).split("").map((d,i)=>`<button data-pos="${i}">${arNum(d)}</button>`).join("")}</div>
-    <div id="placeExplain" class="feedback">اختر رقمًا من العدد.</div>
-    <div class="cta-row"><button class="btn secondary" id="newPlaceNumber">عدد جديد</button></div>
+function placeNamesFor(len){
+  const all=["آحاد","عشرات","مئات","ألوف","عشرات الألوف"];
+  return all.slice(0,len);
+}
+function expandedParts(n){
+  const s=String(n), len=s.length;
+  return s.split("").map((d,i)=>Number(d)*(10**(len-1-i))).filter(v=>v!==0);
+}
+function makePlaceLabNumber(len){
+  let digits=[];
+  for(let i=0;i<len;i++){
+    if(i===0) digits.push(rand(1,9));
+    else digits.push(rand(0,9));
+  }
+  // تقليل تكرار الأرقام قدر الإمكان حتى يكون السحب أوضح
+  if(new Set(digits).size<Math.min(len,3)){
+    digits = Array.from({length:len},(_,i)=> i===0?rand(2,9):(i+2)%10);
+  }
+  return Number(digits.join(""));
+}
+function tryPlaceTower(s){
+  const len=s.id==="tenThousands"?5:s.id==="thousands"?4:3;
+  const n=makePlaceLabNumber(len);
+  const digits=String(n).split("").map(Number);
+  const powers=Array.from({length:len},(_,i)=>len-1-i);
+  state.tower={
+    number:n,len,digits,
+    cards:shuffle(digits.map((d,i)=>({digit:d,key:`d${i}`}))),
+    placements:{},selected:null,mission:1,
+    targetPos:null,completed:false
+  };
+  const names=placeNamesFor(len);
+  return `<article class="try-card tower-lab" data-number="${n}">
+    <div class="lab-top">
+      <div>
+        <span class="lab-mission">المهمة <b id="towerMissionNum">١</b> من ٣</span>
+        <h3>🏗️ برج القيمة المنزلية</h3>
+        <p id="towerMissionText">ابنِ العدد بوضع كل رقم في طابقه الصحيح.</p>
+      </div>
+      <div class="lab-progress" aria-label="تقدم المهمة">
+        <i class="active"></i><i></i><i></i>
+      </div>
+    </div>
+
+    <div class="tower-target">
+      <small>العدد المطلوب بناؤه</small>
+      <strong>${formatN(n)}</strong>
+    </div>
+
+    <div class="tower-workspace">
+      <div class="place-tower" id="placeTower">
+        ${powers.map(power=>{
+          const label=names[power];
+          return `<div class="tower-floor" data-power="${power}">
+            <div class="floor-name">${label}<small>قيمته × ${formatN(10**power)}</small></div>
+            <div class="floor-slot" data-power="${power}"></div>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <div class="tower-side">
+        <div class="digit-tray">
+          <h4>بطاقات الأرقام</h4>
+          <div class="digit-cards" id="digitCards">
+            ${state.tower.cards.map(c=>`<button class="digit-card" draggable="true" data-key="${c.key}" data-digit="${c.digit}">${arNum(c.digit)}</button>`).join("")}
+          </div>
+        </div>
+
+        <div class="lab-help" id="towerHelp">
+          <b>طريقة اللعب:</b> اسحب الرقم إلى الطابق، أو المس بطاقة الرقم ثم المس الطابق المناسب.
+        </div>
+        <div class="lab-feedback" id="towerFeedback">ابدأ من أكبر منزلة في العدد.</div>
+        <div class="cta-row">
+          <button class="btn" id="checkTower">تحقق من البناء</button>
+          <button class="btn secondary" id="towerHint">💡 ساعدني</button>
+          <button class="btn secondary" id="resetTower">إعادة</button>
+        </div>
+        <div id="towerExtra"></div>
+      </div>
+    </div>
   </article>`;
+}
+function towerCorrectDigit(power){
+  const t=state.tower;
+  const pos=t.len-1-power;
+  return t.digits[pos];
+}
+function placeTowerCard(key,power){
+  const t=state.tower;
+  if(t.mission!==1) return;
+  const card=document.querySelector(`.digit-card[data-key="${key}"]`);
+  const slot=document.querySelector(`.floor-slot[data-power="${power}"]`);
+  if(!card||!slot)return;
+
+  // إذا كان الطابق يحتوي بطاقة، أعدها للصينية أولاً
+  const oldKey=slot.dataset.key;
+  if(oldKey){
+    const oldCard=document.querySelector(`.digit-card[data-key="${oldKey}"]`);
+    if(oldCard) oldCard.classList.remove("used");
+    delete t.placements[power];
+  }
+  // إذا كانت البطاقة مستخدمة في طابق آخر، حرر الطابق القديم
+  Object.entries(t.placements).forEach(([p,k])=>{
+    if(k===key){
+      const oldSlot=document.querySelector(`.floor-slot[data-power="${p}"]`);
+      if(oldSlot){oldSlot.textContent="";oldSlot.removeAttribute("data-key")}
+      delete t.placements[p];
+    }
+  });
+
+  slot.textContent=card.textContent;
+  slot.dataset.key=key;
+  t.placements[power]=key;
+  card.classList.add("used");
+  $$(".digit-card").forEach(x=>x.classList.remove("selected"));
+  t.selected=null;
+}
+function bindPlaceTower(){
+  const t=state.tower;
+  $$(".digit-card").forEach(card=>{
+    card.onclick=()=>{
+      if(t.mission!==1||card.classList.contains("used"))return;
+      $$(".digit-card").forEach(x=>x.classList.remove("selected"));
+      card.classList.add("selected");t.selected=card.dataset.key;
+      $("#towerFeedback").textContent="الآن المس الطابق الذي تريد وضع الرقم فيه.";
+    };
+    card.ondragstart=e=>{
+      if(t.mission!==1||card.classList.contains("used")){e.preventDefault();return}
+      e.dataTransfer.setData("text/plain",card.dataset.key);
+    };
+  });
+  $$(".tower-floor").forEach(floor=>{
+    floor.ondragover=e=>{if(t.mission===1){e.preventDefault();floor.classList.add("drag-over")}};
+    floor.ondragleave=()=>floor.classList.remove("drag-over");
+    floor.ondrop=e=>{
+      if(t.mission!==1)return;
+      e.preventDefault();floor.classList.remove("drag-over");
+      const key=e.dataTransfer.getData("text/plain");
+      placeTowerCard(key,+floor.dataset.power);
+    };
+    floor.onclick=()=>{
+      if(t.mission===1 && t.selected){
+        placeTowerCard(t.selected,+floor.dataset.power);return;
+      }
+      if(t.mission===2){
+        checkTowerFloor(+floor.dataset.power);
+      }
+    };
+  });
+
+  $("#checkTower").onclick=checkTowerBuild;
+  $("#towerHint").onclick=towerHint;
+  $("#resetTower").onclick=()=>setTab("try");
+}
+function checkTowerBuild(){
+  const t=state.tower;
+  if(t.mission!==1)return;
+  if(Object.keys(t.placements).length<t.len){
+    $("#towerFeedback").className="lab-feedback warn";
+    $("#towerFeedback").innerHTML="<strong>البرج لم يكتمل بعد.</strong> ضع جميع الأرقام في الطوابق.";
+    return;
+  }
+  let ok=true;
+  Object.entries(t.placements).forEach(([power,key])=>{
+    const card=document.querySelector(`.digit-card[data-key="${key}"]`);
+    const digit=+card.dataset.digit;
+    const floor=document.querySelector(`.tower-floor[data-power="${power}"]`);
+    const good=digit===towerCorrectDigit(+power);
+    floor.classList.toggle("correct-floor",good);
+    if(!good)ok=false;
+  });
+  if(!ok){
+    $("#towerFeedback").className="lab-feedback warn";
+    $("#towerFeedback").innerHTML="<strong>قريب جدًا.</strong> راجع موضع الأرقام. ابدأ من أكبر منزلة.";
+    return;
+  }
+
+  $("#placeTower").classList.add("tower-celebrate");
+  $("#towerFeedback").className="lab-feedback success";
+  $("#towerFeedback").innerHTML="<strong>أحسنت 🌟</strong> بنيت العدد في منازله الصحيحة.";
+  const parts=expandedParts(t.number);
+  const names=placeNamesFor(t.len);
+  const chips=t.digits.map((d,pos)=>{
+    const power=t.len-1-pos,val=d*(10**power);
+    return `<div class="value-chip"><small>${names[power]}</small><b>${formatN(val)}</b></div>`;
+  }).join("");
+  $("#towerExtra").innerHTML=`
+    <div class="value-strip">${chips}</div>
+    <div class="feedback"><b>الصيغة التحليلية:</b><br>${parts.map(formatN).join(" + ")}</div>
+    <div class="cta-row"><button class="btn mint" id="nextTowerMission">انتقل للمهمة ٢</button></div>`;
+  $("#checkTower").disabled=true;
+  $("#nextTowerMission").onclick=startTowerMission2;
+  updateTowerProgress(1);
+}
+function startTowerMission2(){
+  const t=state.tower;t.mission=2;
+  const nonZeroPositions=t.digits.map((d,i)=>d!==0?i:null).filter(v=>v!==null);
+  t.targetPos=pick(nonZeroPositions);
+  const digit=t.digits[t.targetPos];
+  $("#towerMissionNum").textContent="٢";
+  $("#towerMissionText").innerHTML=`اكتشف منزلة الرقم <b>${arNum(digit)}</b> وقيمته: المس طابقه الصحيح.`;
+  $("#towerExtra").innerHTML="";
+  $("#checkTower").style.display="none";
+  $("#towerHelp").innerHTML="<b>المهمة ٢:</b> المس الطابق الذي يحتوي الرقم المطلوب.";
+  $("#towerFeedback").className="lab-feedback";
+  $("#towerFeedback").textContent="تذكر: اسم الطابق هو اسم المنزلة.";
+  $$(".tower-floor").forEach(f=>f.classList.remove("hint-floor"));
+  updateTowerProgress(2);
+}
+function checkTowerFloor(power){
+  const t=state.tower;
+  const correctPower=t.len-1-t.targetPos;
+  const floor=document.querySelector(`.tower-floor[data-power="${power}"]`);
+  if(power!==correctPower){
+    floor.classList.add("hint-floor");
+    setTimeout(()=>floor.classList.remove("hint-floor"),1200);
+    $("#towerFeedback").className="lab-feedback warn";
+    $("#towerFeedback").innerHTML="ليست هذه المنزلة. تتبع الرقم داخل البرج مرة أخرى.";
+    return;
+  }
+  const names=placeNamesFor(t.len),digit=t.digits[t.targetPos],value=digit*(10**correctPower);
+  floor.classList.add("correct-floor");
+  $("#towerFeedback").className="lab-feedback success";
+  $("#towerFeedback").innerHTML=`<strong>صحيح 🌟</strong> الرقم ${arNum(digit)} في منزلة <b>${names[correctPower]}</b> وقيمته <b>${formatN(value)}</b>.`;
+  $("#towerExtra").innerHTML=`<div class="cta-row"><button class="btn mint" id="nextTowerMission3">انتقل للمهمة ٣</button></div>`;
+  $("#nextTowerMission3").onclick=startTowerMission3;
+}
+function startTowerMission3(){
+  const t=state.tower;t.mission=3;
+  $("#towerMissionNum").textContent="٣";
+  $("#towerMissionText").textContent="اختر الصيغة التحليلية الصحيحة للعدد.";
+  $("#towerHelp").innerHTML="<b>المهمة ٣:</b> اجمع قيم الأرقام غير الصفرية.";
+  $("#towerFeedback").className="lab-feedback";
+  $("#towerFeedback").textContent="اختر الإجابة التي تمثل قيمة كل رقم بحسب منزلته.";
+  updateTowerProgress(3);
+
+  const correct=expandedParts(t.number).map(formatN).join(" + ");
+  const n=t.number,len=t.len;
+  const wrong1=String(n).split("").map(Number).filter(x=>x!==0).map(formatN).join(" + ");
+  const wrong2=expandedParts(n).map((v,i)=>i===0?Math.max(1,Math.floor(v/10)):v).map(formatN).join(" + ");
+  const wrong3=expandedParts(n).slice().reverse().map(formatN).join(" + ");
+  const opts=shuffle([...new Set([correct,wrong1,wrong2,wrong3])]);
+  $("#towerExtra").innerHTML=`<div class="expanded-choice" id="expandedChoices">
+    ${opts.map(o=>`<button class="option" data-value="${o}">${o}</button>`).join("")}
+  </div>`;
+  $$("#expandedChoices .option").forEach(b=>b.onclick=()=>{
+    const ok=b.dataset.value===correct;
+    b.classList.add(ok?"correct":"wrong");
+    if(!ok){
+      $("#towerFeedback").className="lab-feedback warn";
+      $("#towerFeedback").textContent="راجع قيمة كل رقم داخل البرج ثم حاول مرة أخرى.";
+      return;
+    }
+    $$("#expandedChoices .option").forEach(x=>x.disabled=true);
+    $("#towerFeedback").className="lab-feedback success";
+    $("#towerFeedback").innerHTML=`<strong>اكتملت مهام البرج ✨</strong><br>${formatN(t.number)} = ${correct}`;
+    $("#placeTower").classList.add("tower-celebrate");
+    $("#towerExtra").insertAdjacentHTML("beforeend",`<div class="cta-row"><button class="btn mint" id="newTowerRound">ابدأ عددًا جديدًا</button><button class="btn secondary" data-tab-jump="practice">انتقل للتدريب</button></div>`);
+    $("#newTowerRound").onclick=()=>setTab("try");
+    bindPanel();
+    updateTowerProgress(4);
+    const old=mastery[state.skill.id]||0;
+    if(old<40){mastery[state.skill.id]=40;saveMastery();}
+  });
+}
+function towerHint(){
+  const t=state.tower;
+  if(t.mission===1){
+    const missingPower=Array.from({length:t.len},(_,i)=>i).find(power=>{
+      const key=t.placements[power];
+      if(!key)return true;
+      const card=document.querySelector(`.digit-card[data-key="${key}"]`);
+      return +card.dataset.digit!==towerCorrectDigit(power);
+    });
+    const floor=document.querySelector(`.tower-floor[data-power="${missingPower}"]`);
+    if(floor){floor.classList.add("hint-floor");setTimeout(()=>floor.classList.remove("hint-floor"),1800)}
+    $("#towerFeedback").innerHTML=`ابدأ بالطابق <strong>${placeNamesFor(t.len)[missingPower]}</strong>. الرقم الصحيح فيه هو <strong>${arNum(towerCorrectDigit(missingPower))}</strong>.`;
+  }else if(t.mission===2){
+    const p=t.len-1-t.targetPos;
+    const floor=document.querySelector(`.tower-floor[data-power="${p}"]`);
+    floor?.classList.add("hint-floor");setTimeout(()=>floor?.classList.remove("hint-floor"),1800);
+    $("#towerFeedback").textContent="الطابق المضيء هو المنزل الصحيح.";
+  }else{
+    $("#towerFeedback").textContent="اكتب قيمة كل رقم حسب منزله، ولا تكتب حدًا للرقم صفر.";
+  }
+}
+function updateTowerProgress(stage){
+  $$(".lab-progress i").forEach((dot,i)=>{
+    dot.classList.toggle("done",i<stage-1 || stage===4);
+    dot.classList.toggle("active",stage!==4 && i===stage-1);
+  });
 }
 function tryPattern(){
   const step=pick([2,5,10,-2,-5,-10]), start=rand(step<0?40:2,step<0?80:20);
@@ -323,7 +603,7 @@ function tryRound(s){
 function bindTry(){
   const s=state.skill;
   if(["place","thousands","tenThousands"].includes(s.id)){
-    bindPlaceTry();
+    bindPlaceTower();
   }else if(s.id==="patterns"){
     $$("#tryPatternOpts .option").forEach(b=>b.onclick=()=>{
       const card=b.closest(".try-card"),ok=+b.dataset.value===+card.dataset.answer;
@@ -348,14 +628,7 @@ function bindTry(){
     $("#resetSteps").onclick=()=>setTab("try");
   }
 }
-function bindPlaceTry(){
-  const card=$(".try-card"), n=String(card.dataset.number), names=["آحاد","عشرات","مئات","ألوف","عشرات الألوف"];
-  $$("#digitPick button").forEach(b=>b.onclick=()=>{
-    const pos=+b.dataset.pos, digit=+n[pos], power=n.length-1-pos, value=digit*(10**power);
-    $("#placeExplain").innerHTML=`الرقم <strong>${arNum(digit)}</strong> في منزلة <strong>${names[power]}</strong>، وقيمته <strong>${formatN(value)}</strong>.`;
-  });
-  $("#newPlaceNumber").onclick=()=>setTab("try");
-}
+
 
 function makeQuestion(skill, hard=false){
   const id=skill.id;
@@ -521,6 +794,61 @@ function openTeacherTool(tool,s){
 $("#closeDialog").onclick=()=>$("#teacherDialog").close();
 $("#presentBtn").onclick=()=>{document.body.classList.toggle("presentation");toast(document.body.classList.contains("presentation")?"تم تفعيل وضع العرض":"تم إنهاء وضع العرض")};
 
+
+/* مسار مراجعة صفية متكامل */
+let classReview={skill:null,step:0};
+function openClassReview(){
+  const s=skills.find(x=>x.id===$("#teacherSkill").value)||skills[0];
+  classReview={skill:s,step:0};
+  $("#dialogKicker").textContent=`🎬 مراجعة صفية • ${s.title}`;
+  $("#dialogTitle").textContent="مسار مراجعة جاهز";
+  $("#teacherDialog").showModal();
+  renderClassReviewStep();
+}
+function renderClassReviewStep(){
+  const s=classReview.skill, step=classReview.step;
+  const titles=["الفكرة في دقيقة","اعرض النموذج","تحدي السبورة","الخطأ الشائع","بطاقة خروج"];
+  const icons=["💡","🧩","⚡","🩺","✅"];
+  let body="";
+  if(step===0){
+    body=`<p>${s.teacher.idea}</p><div class="rule-box"><b>قاعدة المهارة:</b><br>${s.rule}</div>`;
+  }else if(step===1){
+    body=`<p>${s.teacher.model}</p><div class="review-number">${s.example}</div>`;
+  }else if(step===2){
+    const q=makeQuestion(s,true);
+    body=`<p>اعرض السؤال للفصل، واترك وقتًا للتفكير قبل إظهار الإجابة.</p>
+      <div class="question">${q.prompt}</div>
+      <button class="btn secondary" data-reveal="reviewAns">إظهار الإجابة</button>
+      <div class="feedback" id="reviewAns" hidden><b>الإجابة:</b> ${typeof q.answer==="number"?formatN(q.answer):q.answer}<br>${q.explain}</div>`;
+  }else if(step===3){
+    body=`<p>${s.teacher.error}</p><div class="feedback"><b>التوجيه:</b> اطلب من الطلاب تفسير موضع الخطأ قبل إعطاء التصحيح.</div>`;
+  }else{
+    body=`<p>اختم الحصة بهذه الأسئلة الثلاثة:</p><div class="exit-list">
+      ${s.teacher.exit.map((x,i)=>`<div class="exit-item"><b>${arNum(i+1)}.</b> ${x}</div>`).join("")}
+      </div>`;
+  }
+
+  $("#dialogBody").innerHTML=`<div class="review-stepper">
+    <div class="review-dots">${titles.map((_,i)=>`<i class="${i<step?"done":i===step?"active":""}"></i>`).join("")}</div>
+    <div class="review-stage">
+      <span class="eyebrow">${icons[step]} الخطوة ${arNum(step+1)} من ٥</span>
+      <h4>${titles[step]}</h4>${body}
+    </div>
+    <div class="review-nav">
+      <button class="btn secondary" id="prevReview" ${step===0?"disabled":""}>السابق</button>
+      <button class="btn" id="nextReview">${step===4?"إنهاء":"التالي"}</button>
+    </div>
+  </div>`;
+  $("#prevReview").onclick=()=>{if(classReview.step>0){classReview.step--;renderClassReviewStep()}};
+  $("#nextReview").onclick=()=>{
+    if(classReview.step<4){classReview.step++;renderClassReviewStep()}
+    else $("#teacherDialog").close();
+  };
+  bindPanel();
+}
+$("#classReviewBtn").onclick=openClassReview;
+
+
 /* عيادة عامة */
 function renderClinic(){
   $("#clinicGrid").innerHTML=skills.map(s=>`<article class="clinic-card">
@@ -535,7 +863,7 @@ function startChallenge(){
   state.challenge={i:0,score:0,questions:[]};
   const chosen=shuffle(skills).slice(0,9);
   state.challenge.questions=chosen.map(s=>({...makeQuestion(s,true),skill:s})); 
-  state.challenge.questions.push({...makeQuestion(pick(skills),true),skill:pick(skills)});
+  const bonusSkill=pick(skills); state.challenge.questions.push({...makeQuestion(bonusSkill,true),skill:bonusSkill});
   renderChapterQ();
 }
 function renderChapterQ(){

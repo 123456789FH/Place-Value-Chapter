@@ -7,6 +7,7 @@
   <meta name="description" content="مدينة الأعداد | رحلة الإتقان - مراجعة تفاعلية للفصل الأول: القيمة المنزلية، الصف الثالث الابتدائي." />
   <title>مدينة الأعداد | رحلة الإتقان</title>
   <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./assets/icon-192.png" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
@@ -14,7 +15,7 @@
     <header class="topbar">
       <button class="icon-btn hidden" id="backBtn" aria-label="رجوع">↩</button>
       <div class="brand" role="button" tabindex="0" id="homeBrand">
-        <span class="brand-mark">١٠</span>
+        <span class="brand-mark logo-mark"><img class="brand-logo" src="./assets/forum-logo.jpg" alt="شعار ملتقى التعليم التفاعلي" /></span>
         <div>
           <strong>مدينة الأعداد</strong>
           <small>رحلة الإتقان</small>
@@ -37,6 +38,7 @@
             <div class="road"><i></i><i></i><i></i><i></i></div>
           </div>
           <div class="hero-copy glass">
+            <img class="hero-logo" src="./assets/forum-logo.jpg" alt="ملتقى التعليم التفاعلي" />
             <span class="eyebrow">رياضيات • الصف الثالث الابتدائي</span>
             <h1>مدينة الأعداد <em>رحلة الإتقان</em></h1>
             <p>اكتشف • ابنِ • قارن • رتّب • قرّب • أتقن</p>
@@ -130,6 +132,10 @@
           <label for="teacherSkill">اختر المهارة التي تريد تقديمها</label>
           <select id="teacherSkill"></select>
           <div class="teacher-objective" id="teacherObjective"></div>
+          <div class="teacher-start-row">
+            <button class="btn mint teacher-start" id="classReviewBtn">▶ ابدأ مراجعة صفية</button>
+            <small>مسار جاهز: فكرة سريعة ← نموذج ← تحدي ← خطأ شائع ← بطاقة خروج</small>
+          </div>
         </div>
 
         <div class="teacher-tools" id="teacherTools"></div>
@@ -162,6 +168,7 @@
     </main>
 
     <footer>
+      <img class="footer-logo" src="./assets/forum-logo.jpg" alt="" />
       <span>أ/ فاطمة هزازي</span>
       <span>ملتقى التعليم التفاعلي</span>
       <span>ملتقى معلمي ومعلمات الرياضيات</span>
