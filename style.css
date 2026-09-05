@@ -2352,3 +2352,307 @@ footer:before{
 .round-end{position:absolute;bottom:18px;transform:translateX(-50%);text-align:center;min-width:110px}.round-end b{display:block;padding:10px 12px;border-radius:18px;background:rgba(255,255,255,.92);color:#25415f;font-size:24px;box-shadow:0 10px 18px rgba(0,0,0,.08)}.round-end small{display:block;margin-top:5px;color:#264a63;font-weight:800}.round-target-marker{position:absolute;bottom:84px;transform:translateX(-50%);min-width:98px;text-align:center}.round-target-marker .marker-number{display:inline-grid;place-items:center;min-width:90px;min-height:56px;padding:8px 12px;border-radius:18px;background:linear-gradient(180deg,#fff2a7,#ffd365);color:#2b405d;font-size:28px;font-weight:900;box-shadow:0 12px 18px rgba(0,0,0,.10)}.round-target-marker .marker-arrow{display:block;margin:4px auto 0;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:16px solid #ffd365}.round-midpoint{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);color:#fff;font-weight:900;background:rgba(35,62,86,.62);padding:6px 10px;border-radius:999px}
 .round-choice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}.round-choice{min-height:80px;border-radius:22px;font-size:30px;font-weight:900}.round-feedback{margin-top:14px;border-radius:20px;padding:16px 18px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);line-height:1.9}.round-helper{display:grid;grid-template-columns:82px 1fr;gap:12px;align-items:center;margin-top:14px;padding:12px 14px;border-radius:20px;background:rgba(121,231,198,.09);border:1px solid rgba(121,231,198,.16)}.round-helper img{width:78px;height:78px;object-fit:contain}.round-helper b{display:block;margin-bottom:5px}.round-error-card .round-choice-grid{margin-top:16px}.round-wrong-badge{display:inline-flex;gap:7px;align-items:center;padding:9px 12px;border-radius:999px;background:rgba(255,155,155,.10);border:1px solid rgba(255,155,155,.18);color:#ffd9d9;font-weight:800}
 .castle-gates{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}.castle-gate{min-height:120px;border-radius:28px 28px 12px 12px;background:linear-gradient(180deg,#ffeaa3,#d5aa42);color:#2b405d;display:grid;place-items:center;text-align:center;font-weight:900;font-size:28px;position:relative;box-shadow:0 12px 18px rgba(0,0,0,.10)}.castle-gate::before,.castle-gate::after{content:"";position:absolute;top:-18px;width:44px;height:36px;background:#e7c65b;border-radius:10px 10px 0 0}.castle-gate::before{left:12px}.castle-gate::after{right:12px}.castle-gate small{display:block;font-size:14px;margin-top:4px}@media(max-width:800px){.round-choice-grid,.castle-gates{grid-template-columns:1fr}.round-head{flex-direction:column}}
+
+
+/* =========================================================
+   V2.0 | الصقل النهائي
+   ========================================================= */
+html,body{overflow-x:hidden}
+button,.option,.mode-card,.skill-card,.game-island,.feature-game{touch-action:manipulation}
+button,input{min-height:44px}
+
+.student-name-row{
+  display:grid;
+  grid-template-columns:auto minmax(180px,1fr);
+  gap:8px 12px;
+  align-items:center;
+  margin:14px 0 4px;
+  padding:14px;
+  border-radius:20px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+}
+.student-name-row label{font-weight:900}
+.student-name-row input{
+  width:100%;
+  border:none;
+  outline:none;
+  border-radius:14px;
+  padding:11px 13px;
+  background:rgba(255,255,255,.94);
+  color:#223b5a;
+  font-weight:800;
+}
+.student-name-row small{
+  grid-column:1/-1;
+  color:#c9d5ed;
+  font-size:12px;
+}
+.final-achievement-launch{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  padding:20px 22px;
+  border-radius:28px;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.06)),
+    radial-gradient(circle at 86% 14%,rgba(243,201,107,.11),transparent 20%);
+}
+.final-achievement-launch h3{font-size:28px;margin:8px 0}
+.final-achievement-launch p{margin:0;color:var(--muted);line-height:1.8}
+
+/* النجوم والمكافآت */
+.reward-burst{
+  position:fixed;
+  inset:0;
+  z-index:999;
+  pointer-events:none;
+  overflow:hidden;
+}
+.reward-star{
+  position:absolute;
+  left:50%;
+  top:50%;
+  font-size:28px;
+  opacity:0;
+  animation:rewardStarFly 1.05s ease-out forwards;
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));
+}
+.reward-pop{animation:rewardPop .5s ease}
+.win-motion{animation:winMotion .55s ease}
+@keyframes rewardStarFly{
+  0%{transform:translate(-50%,-50%) scale(.35) rotate(0);opacity:0}
+  18%{opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.35) rotate(var(--rot));opacity:0}
+}
+@keyframes rewardPop{
+  0%{transform:scale(.96)}
+  65%{transform:scale(1.035)}
+  100%{transform:scale(1)}
+}
+@keyframes winMotion{
+  0%{transform:translateX(0)}
+  45%{transform:translateX(-8px)}
+  75%{transform:translateX(4px)}
+  100%{transform:translateX(0)}
+}
+.option.correct,.step-option.correct,.compare-choice.correct,.lane-choice.correct,.round-choice.correct{
+  animation:rewardPop .45s ease;
+}
+
+/* اتجاه قطار الأنماط النهائي: يبدأ من اليمين وينتهي بالعربة المفقودة قرب القاطرة */
+.pattern-train-row,.train-row,.pattern-error-row{
+  direction:rtl !important;
+}
+.pattern-train-row,.train-row{justify-content:flex-start !important}
+.train-diff-row{direction:rtl !important}
+
+/* بطاقة الإنجاز */
+.achievement-dialog{
+  width:min(920px,94vw);
+  max-height:92vh;
+  border-radius:30px;
+}
+.achievement-dialog-body{padding:22px}
+.achievement-card{
+  position:relative;
+  overflow:hidden;
+  border-radius:34px;
+  padding:28px;
+  background:
+    radial-gradient(circle at 14% 12%,rgba(121,231,198,.15),transparent 22%),
+    radial-gradient(circle at 88% 12%,rgba(243,201,107,.17),transparent 24%),
+    linear-gradient(145deg,#20345d,#40588e);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 24px 54px rgba(0,0,0,.22);
+}
+.achievement-card::before{
+  content:"✦  ✦  ✦";
+  position:absolute;
+  top:20px;
+  left:24px;
+  color:#ffe38e;
+  letter-spacing:10px;
+  font-size:22px;
+  opacity:.65;
+}
+.achievement-top{
+  display:grid;
+  grid-template-columns:130px 1fr 170px;
+  align-items:center;
+  gap:18px;
+}
+.achievement-logo{
+  width:110px;height:110px;object-fit:contain;border-radius:24px;background:#fff;padding:5px
+}
+.achievement-mascots{
+  width:165px;max-height:150px;object-fit:contain;justify-self:end;
+  filter:drop-shadow(0 12px 20px rgba(0,0,0,.16))
+}
+.achievement-title{text-align:center}
+.achievement-title .eyebrow{justify-content:center}
+.achievement-title h2{font-size:38px;margin:8px 0 4px}
+.achievement-title p{margin:0;color:#dce7fb}
+.achievement-student{
+  margin:22px 0 16px;
+  text-align:center;
+  padding:16px 18px;
+  border-radius:22px;
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.12);
+}
+.achievement-student small{display:block;color:#cdd9f0}
+.achievement-student strong{display:block;font-size:30px;margin-top:5px;color:#fff}
+.achievement-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin:16px 0;
+}
+.achievement-stat{
+  min-height:100px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  border-radius:22px;
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.12);
+  text-align:center;
+}
+.achievement-stat b{font-size:28px;color:#ffe08a}
+.achievement-stat small{color:#d4dff3}
+.achievement-skill-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:18px 0;
+}
+.achievement-skill{
+  padding:12px;
+  border-radius:18px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+}
+.achievement-skill-head{
+  display:flex;justify-content:space-between;gap:8px;align-items:center
+}
+.achievement-skill b{font-size:14px}
+.achievement-skill strong{color:#ffe08a}
+.achievement-mini-bar{
+  height:7px;border-radius:999px;background:rgba(255,255,255,.10);overflow:hidden;margin-top:8px
+}
+.achievement-mini-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--gold))}
+.achievement-status{
+  margin-top:16px;
+  padding:16px 18px;
+  border-radius:22px;
+  text-align:center;
+  background:rgba(243,201,107,.10);
+  border:1px solid rgba(243,201,107,.20);
+}
+.achievement-status b{display:block;font-size:25px;color:#ffe08a}
+.achievement-status span{display:block;margin-top:5px;color:#e5edfb}
+.achievement-footer-line{
+  display:flex;justify-content:center;flex-wrap:wrap;gap:10px 18px;
+  margin-top:18px;color:#c3d0e7;font-size:12px
+}
+.achievement-actions{
+  display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px
+}
+
+/* توحيد صقل البطاقات */
+.lesson-card,.practice-card,.try-card,.error-card,.mastery-card,
+.pattern-game-card,.solve-game-card,.place-game-card,.compare-game-card,.order-game-card,.round-game-card{
+  box-shadow:0 16px 32px rgba(0,0,0,.10);
+}
+.skill-card.done{
+  box-shadow:0 0 0 1px rgba(121,231,198,.24),0 14px 28px rgba(0,0,0,.10);
+}
+
+/* iPad / tablet */
+@media(max-width:1180px){
+  main{padding-inline:20px}
+  .student-hero-card{grid-template-columns:.9fr 1.1fr !important}
+  #skillScreen .student-skill-world{grid-template-columns:1.1fr .9fr !important}
+  .student-journey-tabs{grid-template-columns:repeat(3,1fr) !important}
+  .achievement-skill-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  .student-hero-card,
+  #skillScreen .student-skill-world{grid-template-columns:1fr !important}
+  .playful-skill-map,.home-games,.v14-feature-grid{grid-template-columns:repeat(2,1fr) !important}
+  .achievement-top{grid-template-columns:90px 1fr 110px}
+  .achievement-logo{width:82px;height:82px}
+  .achievement-mascots{width:110px}
+  .achievement-title h2{font-size:30px}
+  .achievement-summary{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:650px){
+  main{padding-inline:10px}
+  .topbar{padding-inline:max(12px,env(safe-area-inset-left))}
+  .student-world{gap:12px}
+  .student-hero-card{padding:14px;border-radius:24px}
+  .student-hero-illustration{min-height:210px}
+  .big-student-mascot{width:min(280px,90%)}
+  .student-hero-copy h3{font-size:24px}
+  .student-hero-copy p{font-size:16px}
+  .student-name-row{grid-template-columns:1fr}
+  .student-name-row small{grid-column:auto}
+  .student-mode-grid{grid-template-columns:1fr !important}
+  .playful-skill-map,.home-games,.v14-feature-grid{grid-template-columns:1fr !important}
+  #skillScreen .student-skill-world{padding:14px !important;border-radius:24px !important}
+  .mascot-skill-stage{min-height:190px !important}
+  .skill-mascot-image{width:min(190px,80%)}
+  .student-skill-copy h2{font-size:34px}
+  .student-skill-copy p{font-size:16px}
+  .student-journey-tabs{grid-template-columns:repeat(2,1fr) !important;gap:8px !important}
+  .student-journey-tabs button{min-height:76px !important;padding:8px !important}
+  .student-journey-tabs button span{font-size:21px !important}
+  .student-journey-tabs button b{font-size:16px !important}
+  .final-achievement-launch{display:grid;padding:16px}
+  .achievement-card{padding:16px;border-radius:24px}
+  .achievement-top{grid-template-columns:1fr;text-align:center}
+  .achievement-logo,.achievement-mascots{justify-self:center}
+  .achievement-title h2{font-size:27px}
+  .achievement-summary{grid-template-columns:1fr}
+  .achievement-skill-grid{grid-template-columns:1fr}
+  .portal-actions{grid-template-columns:1fr}
+  .quick-actions{gap:7px}
+  footer{padding-bottom:max(20px,env(safe-area-inset-bottom))}
+}
+
+/* حركة أقل لمن يفضلها */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* طباعة بطاقة الإنجاز */
+@media print{
+  body.printing-achievement *{visibility:hidden !important}
+  body.printing-achievement #achievementDialog,
+  body.printing-achievement #achievementDialog *{visibility:visible !important}
+  body.printing-achievement #achievementDialog{
+    position:absolute !important;
+    inset:0 !important;
+    width:100% !important;
+    max-width:none !important;
+    max-height:none !important;
+    margin:0 !important;
+    border:none !important;
+    background:white !important;
+    color:#111 !important;
+  }
+  body.printing-achievement .dialog-head,
+  body.printing-achievement .achievement-actions{display:none !important}
+  body.printing-achievement .achievement-dialog-body{padding:0 !important}
+  body.printing-achievement .achievement-card{
+    box-shadow:none !important;
+    min-height:95vh;
+    page-break-inside:avoid;
+  }
+}

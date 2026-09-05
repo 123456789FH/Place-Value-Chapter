@@ -232,6 +232,10 @@ const $ = s=>document.querySelector(s);
 const $$ = s=>[...document.querySelectorAll(s)];
 const mastery = JSON.parse(localStorage.getItem("cityMastery")||"{}");
 const saveMastery = () => localStorage.setItem("cityMastery",JSON.stringify(mastery));
+let rewardStars = Math.max(0, Number(localStorage.getItem("cityRewardStars")||0) || 0);
+let studentName = localStorage.getItem("cityStudentName") || "";
+const saveRewardStars = () => localStorage.setItem("cityRewardStars", String(rewardStars));
+const saveStudentName = () => localStorage.setItem("cityStudentName", studentName);
 const toast = (msg)=>{ const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600); };
 
 function go(id){
@@ -259,6 +263,112 @@ $$("[data-go]").forEach(b=>b.onclick=()=>{
   go(b.dataset.go);
   if(b.dataset.focusMap) setTimeout(()=>$("#skillsMap")?.scrollIntoView({behavior:"smooth"}),120);
 });
+
+
+function addRewardStars(count=1){
+  rewardStars=Math.max(0,rewardStars+count);
+  saveRewardStars();
+  if($("#studentSummaryChips") && state.screen==="studentScreen") renderStudent();
+}
+function showRewardBurst(count=1,message="أحسنت 🌟"){
+  const layer=$("#rewardBurst");
+  if(layer){
+    layer.innerHTML="";
+    const total=Math.min(12,Math.max(5,count*5));
+    for(let i=0;i<total;i++){
+      const star=document.createElement("span");
+      star.className="reward-star";
+      star.textContent=i%4===0?"✨":"⭐";
+      const angle=(Math.PI*2*i)/total;
+      const distance=80+Math.random()*130;
+      star.style.setProperty("--dx",`${Math.cos(angle)*distance}px`);
+      star.style.setProperty("--dy",`${Math.sin(angle)*distance}px`);
+      star.style.setProperty("--rot",`${Math.round(Math.random()*160-80)}deg`);
+      star.style.animationDelay=`${i*22}ms`;
+      layer.appendChild(star);
+    }
+    setTimeout(()=>{if(layer)layer.innerHTML=""},1300);
+  }
+  toast(message);
+}
+function celebrateReward(count=1,message="أحسنت 🌟"){
+  addRewardStars(count);
+  showRewardBurst(count,message);
+}
+function safeNumberOptions(correct,candidates=[],count=4,min=0){
+  const right=Number(correct);
+  const set=new Set();
+  candidates.forEach(v=>{
+    const n=Number(v);
+    if(Number.isFinite(n) && n>=min && n!==right) set.add(n);
+  });
+  let step=Math.max(1,Math.pow(10,Math.max(0,String(Math.abs(Math.trunc(right))).length-2)));
+  let k=1,guard=0;
+  while(set.size<count-1 && guard<40){
+    const up=right+step*k;
+    const down=right-step*k;
+    if(up>=min && up!==right) set.add(up);
+    if(set.size<count-1 && down>=min && down!==right) set.add(down);
+    k++;guard++;
+  }
+  const distractors=shuffle([...set]).slice(0,Math.max(0,count-1));
+  return shuffle([right,...distractors]);
+}
+function achievementStatus(){
+  const ov=overall();
+  const completed=skills.filter(s=>(mastery[s.id]||0)>=80).length;
+  if(completed===skills.length) return {title:"بطل مدينة الأعداد 🏆",text:"أتقنت جميع مهارات الفصل الأول بنسبة ٨٠٪ فأكثر."};
+  if(ov>=80) return {title:"نجم متقدم ⭐",text:"مستواك العام قوي، وبقيت بعض المحطات للوصول إلى الإتقان الكامل."};
+  if(ov>=60) return {title:"مستكشف مجتهد 🌟",text:"أنت قريب من الإتقان. واصل التدريب على المحطات الأقل نتيجة."};
+  return {title:"مستكشف مدينة الأعداد 🎒",text:"رحلتك مستمرة. ابدأ من المحطة المقترحة وواصل التقدم."};
+}
+function renderAchievementCard(){
+  const name=(studentName||"مستكشف مدينة الأعداد").trim();
+  const ov=overall();
+  const completed=skills.filter(s=>(mastery[s.id]||0)>=80).length;
+  const status=achievementStatus();
+  $("#achievementCard").innerHTML=`
+    <div class="achievement-top">
+      <img class="achievement-logo" src="./assets/forum-logo.jpg" alt="ملتقى التعليم التفاعلي" />
+      <div class="achievement-title">
+        <span class="eyebrow">رياضيات • الصف الثالث الابتدائي</span>
+        <h2>بطاقة إنجاز مدينة الأعداد</h2>
+        <p>الفصل الأول: القيمة المنزلية</p>
+      </div>
+      <img class="achievement-mascots" src="./assets/rashid-basmah.png" alt="راشد وبسمة" />
+    </div>
+    <div class="achievement-student">
+      <small>تُمنح هذه البطاقة إلى</small>
+      <strong>${name.replace(/[<>]/g,"")}</strong>
+    </div>
+    <div class="achievement-summary">
+      <div class="achievement-stat"><b>${arNum(ov)}٪</b><small>الإتقان العام</small></div>
+      <div class="achievement-stat"><b>${arNum(completed)} / ${arNum(skills.length)}</b><small>محطات متقنة</small></div>
+      <div class="achievement-stat"><b>⭐ ${arNum(rewardStars)}</b><small>نجوم الرحلة</small></div>
+    </div>
+    <div class="achievement-skill-grid">
+      ${skills.map(s=>{
+        const m=mastery[s.id]||0;
+        return `<div class="achievement-skill">
+          <div class="achievement-skill-head"><b>${s.icon} ${s.title}</b><strong>${arNum(m)}٪</strong></div>
+          <div class="achievement-mini-bar"><i style="width:${m}%"></i></div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="achievement-status">
+      <b>${status.title}</b>
+      <span>${status.text}</span>
+    </div>
+    <div class="achievement-footer-line">
+      <span>أ/ فاطمة هزازي</span>
+      <span>ملتقى التعليم التفاعلي</span>
+      <span>ملتقى معلمي ومعلمات الرياضيات</span>
+    </div>`;
+}
+function openAchievement(){
+  renderAchievementCard();
+  $("#achievementDialog").showModal();
+}
 
 function overall(){
   const vals=skills.map(s=>mastery[s.id]||0);
@@ -321,8 +431,10 @@ function renderStudent(){
   if($("#studentSummaryChips")) $("#studentSummaryChips").innerHTML = `
     <span class="chip">🏁 محطات منجزة: ${arNum(finished)} / ${arNum(skills.length)}</span>
     <span class="chip">⭐ مستوى الإتقان العام: ${arNum(ov)}٪</span>
+    <span class="chip">✨ نجومي: ${arNum(rewardStars)}</span>
     <span class="chip">🎯 طريقك الحالي: ${state.mode==="learn"?"الفهم":state.mode==="practice"?"التدريب":"التحدي"}</span>
   `;
+  if($("#studentNameInput") && $("#studentNameInput").value!==studentName) $("#studentNameInput").value=studentName;
   if($("#studentNextSkillTitle")) $("#studentNextSkillTitle").textContent = next.place;
   if($("#studentNextSkillDesc")) $("#studentNextSkillDesc").textContent = next.subtitle;
   $("#goNextSkillBtn").onclick=()=>openSkill(next.id,state.mode);
@@ -424,6 +536,7 @@ function bindPanel(){
     if(idx===g.wrongIndex){
       b.classList.add("correct-fault");
       fb.innerHTML=`<strong>أحسنت 🌟</strong> هذه هي العربة الخاطئة، لأن القطار يسير بقاعدة أزيد ${formatN(g.step)}.`;
+      if(!g.rewarded){g.rewarded=true;celebrateReward(1,"اكتشفت الخطأ ⭐");}
     }else{
       fb.innerHTML=`ليست هذه العربة. جرّب عربة أخرى، وراقب الفرق بين الحدود.`;
     }
@@ -452,6 +565,7 @@ function bindPanel(){
     if(choice===g.answer){
       b.classList.add("correct-choice");
       fb.innerHTML=`<strong>أحسنت 🌟</strong> الإجابة الصحيحة هي <b>${g.answer}</b>.`;
+      if(!g.rewarded){g.rewarded=true;celebrateReward(1,"أصلحت القضية ⭐");}
     }else{
       fb.innerHTML=`ليست هذه الخطوة. فكّر في الترتيب الصحيح لخطوات حل المسألة.`;
     }
@@ -472,6 +586,7 @@ function bindPanel(){
     if(val===+g.correct){
       b.classList.add("correct");
       fb.innerHTML=`<strong>أحسنت 🌟</strong> القيمة الصحيحة هي <b>${formatN(g.correct)}</b>.`;
+      if(!g.rewarded){g.rewarded=true;celebrateReward(1,"أصلحت بطاقة البرج ⭐");}
     }else{
       b.classList.add("wrong");
       fb.innerHTML=`جرّب مرة أخرى. راقب منزلة الرقم ثم اضربه في قيمة تلك المنزلة.`;
@@ -493,6 +608,7 @@ function bindPanel(){
     if(choice===g.correct){
       b.classList.add("correct");
       $("#compareErrorFeedback").innerHTML=`<strong>أحسنت 🌟</strong> الرمز الصحيح هو <b>${g.correct}</b>.`;
+      if(!g.rewarded){g.rewarded=true;celebrateReward(1,"أصلحت الجسر ⭐");}
     }else{
       b.classList.add("wrong");
       $("#compareErrorFeedback").innerHTML=`جرّب من جديد. راقب أول منزلة يختلف عندها العددان.`;
@@ -514,6 +630,7 @@ function bindPanel(){
     if(choice===g.correctText){
       b.classList.add("correct");
       $("#orderErrorFeedback").innerHTML=`<strong>أحسنت 🌟</strong> هذا هو الترتيب الصحيح.`;
+      if(!g.rewarded){g.rewarded=true;celebrateReward(1,"أصلحت المضمار ⭐");}
     }else{
       b.classList.add("wrong");
       $("#orderErrorFeedback").innerHTML=`ما زال المسار غير صحيح. قارن الأعداد منزلة منزلة.`;
@@ -539,7 +656,7 @@ function renderTry(s){
   if(s.id==="compare") return tryCompare();
   if(s.id==="order") return tryOrder();
   if(["round10_100","round1000"].includes(s.id)) return tryRound(s);
-  return `<article class="try-card"><span class="eyebrow">🧪 تجربة قصيرة</span><h3>رتّب خطوات التفكير</h3>
+  return `<article class="try-card" data-rewarded="0"><span class="eyebrow">🧪 تجربة قصيرة</span><h3>رتّب خطوات التفكير</h3>
     <p>اضغط الخطوات بالترتيب الصحيح لحل المسألة.</p>
     <div class="tap-order" id="stepPick">
       ${shuffle(["أفهم","أخطط","أحل","أتحقق"]).map(x=>`<button data-step="${x}">${x}</button>`).join("")}
@@ -810,6 +927,7 @@ function startTowerMission3(){
     updateTowerProgress(4);
     const old=mastery[state.skill.id]||0;
     if(old<40){mastery[state.skill.id]=40;saveMastery();}
+    if(!state.tower.rewarded){state.tower.rewarded=true;celebrateReward(2,"اكتملت مهام البرج ⭐⭐");}
   });
 }
 function towerHint(){
@@ -840,19 +958,20 @@ function updateTowerProgress(stage){
   });
 }
 function tryPattern(){
-  const step=pick([2,5,10,-2,-5,-10]), start=rand(step<0?40:2,step<0?80:20);
+  const step=pick([2,5,10,-2,-5,-10]), absStep=Math.abs(step);
+  const start=step<0?rand(absStep*5,absStep*10):rand(2,20);
   const seq=[start,start+step,start+2*step,start+3*step];
   const ans=start+4*step;
-  const opts=shuffle([ans,ans+(step>0?5:-5),ans+(step>0?10:-10)]);
-  return `<article class="try-card" data-answer="${ans}">
+  const opts=safeNumberOptions(ans,[ans+absStep,ans-absStep,ans+2*absStep],3,0);
+  return `<article class="try-card" data-answer="${ans}" data-rewarded="0">
     <span class="eyebrow">🚂 قطار الأنماط</span><h3>أكمل عربة القطار الأخيرة</h3>
     <div class="pattern-scene">
-      <p>اكتشف القاعدة أولًا، ثم اختر العدد الذي يجب أن تحمله العربة الأخيرة.</p>
+      <p>اقرأ القطار من اليمين إلى اليسار: اكتشف القاعدة ثم أكمل العربة الأخيرة قبل القاطرة.</p>
       <div class="pattern-track">
         <div class="train-row">
-          <div class="engine">🚂</div>
           ${seq.map(n=>`<div class="wagon">${formatN(n)}</div>`).join("")}
-          <div class="wagon question-wagon">؟</div>
+          <div class="wagon question-wagon" id="tryPatternMissing">؟</div>
+          <div class="engine">🚂</div>
         </div>
       </div>
       <div class="pattern-options" id="tryPatternOpts">
@@ -865,7 +984,7 @@ function tryPattern(){
 function tryCompare(){
   const a=rand(1200,9999), b=Math.random()<.2?a:rand(1200,9999);
   const ans=a===b?"=":a>b?">":"<";
-  return `<article class="try-card" data-a="${a}" data-b="${b}" data-answer="${ans}">
+  return `<article class="try-card" data-a="${a}" data-b="${b}" data-answer="${ans}" data-rewarded="0">
     <span class="eyebrow">⚖️ جسر المقارنة</span><h3>ضع الرمز الصحيح بين العددين</h3>
     <div class="compare-scene">
       <p>ابدأ من أكبر منزلة، ثم انتقل حتى أول اختلاف بين العددين.</p>
@@ -884,7 +1003,7 @@ function tryCompare(){
 }
 function tryOrder(){
   const nums=shuffle([rand(1200,2500),rand(2501,4300),rand(4301,6700),rand(6701,9500)]);
-  return `<article class="try-card" data-answer="${[...nums].sort((a,b)=>a-b).join(",")}">
+  return `<article class="try-card" data-answer="${[...nums].sort((a,b)=>a-b).join(",")}" data-rewarded="0">
     <span class="eyebrow">🏁 مضمار الترتيب</span><h3>رتّب من الأصغر إلى الأكبر</h3>
     <p>المس البطاقات بالترتيب. ستنتقل إلى المسار السفلي.</p>
     <div class="tap-order" id="orderPick">${nums.map(n=>`<button data-n="${n}">${formatN(n)}</button>`).join("")}</div>
@@ -899,7 +1018,7 @@ function tryRound(s){
   const low=Math.floor(n/to)*to, high=low+to, midpoint=low+to/2;
   const pct=((n-low)/(high-low))*90+5;
   const ans=Math.round(n/to)*to;
-  return `<article class="try-card round-game-card" data-answer="${ans}">
+  return `<article class="try-card round-game-card" data-answer="${ans}" data-rewarded="0">
     <div class="round-head"><div><span class="eyebrow">${isThousand?"🏰 برج الألف":"🎯 ساحة التقريب"}</span><h3>${isThousand?"اختر بوابة الألف الأقرب":"إلى أي عدد هو أقرب؟"}</h3><p>${isThousand?`ساعد العدد ${formatN(n)} على دخول بوابة الألف الأقرب.`:`قرّب ${formatN(n)} إلى أقرب ${formatN(to)} باستخدام طريق التقريب.`}</p></div></div>
     <div class="round-scene ${isThousand?"thousand-scene":""}"><div class="round-road"><div class="round-track"></div><div class="round-end" style="left:5%"><b>${formatN(low)}</b><small>الطرف الأول</small></div><div class="round-end" style="left:95%"><b>${formatN(high)}</b><small>الطرف الثاني</small></div><div class="round-target-marker" style="left:${pct}%"><span class="marker-number">${formatN(n)}</span><span class="marker-arrow"></span></div><div class="round-midpoint">المنتصف ${formatN(midpoint)}</div></div>${isThousand?`<div class="castle-gates"><div class="castle-gate">${formatN(low)}<small>بوابة الألف</small></div><div class="castle-gate">${formatN(high)}<small>بوابة الألف</small></div></div>`:""}</div>
     <div class="round-choice-grid" id="roundOpts"><button class="option round-choice" data-value="${low}">${formatN(low)}</button><button class="option round-choice" data-value="${high}">${formatN(high)}</button></div>
@@ -914,24 +1033,49 @@ function bindTry(){
   }else if(s.id==="patterns"){
     $$("#tryPatternOpts .option").forEach(b=>b.onclick=()=>{
       const card=b.closest(".try-card"),ok=+b.dataset.value===+card.dataset.answer;
-      b.classList.add(ok?"correct":"wrong");$("#tryPatternFeedback").innerHTML=ok?"<strong>أحسنت!</strong> اكتشفت القاعدة.":"جرّب مرة أخرى، واحسب الفرق بين عددين متتاليين.";
+      b.classList.add(ok?"correct":"wrong");
+      if(ok){
+        const missing=$("#tryPatternMissing"); if(missing){missing.textContent=b.textContent;missing.classList.add("correct-fill");}
+        if(card.dataset.rewarded!=="1"){card.dataset.rewarded="1";celebrateReward(1,"أكملت القطار ⭐");}
+        card.querySelector(".train-row")?.classList.add("win-motion");
+      }
+      $("#tryPatternFeedback").innerHTML=ok?"<strong>أحسنت!</strong> اكتشفت القاعدة وأكملت القطار.":"جرّب مرة أخرى، واحسب الفرق بين عددين متتاليين.";
     });
   }else if(s.id==="compare"){
     $$("#compareSymbols button").forEach(b=>b.onclick=()=>{
       const card=b.closest(".try-card"),ok=b.textContent===card.dataset.answer;
-      $("#symbolSlot").textContent=b.textContent;$("#compareFeedback").innerHTML=ok?"<strong>صحيح.</strong> المقارنة تمت من أكبر منزلة.":"راجع أول منزلة يختلف عندها العددان.";
+      $("#symbolSlot").textContent=b.textContent;
+      if(ok && card.dataset.rewarded!=="1"){card.dataset.rewarded="1";celebrateReward(1,"عبرت جسر المقارنة ⭐");card.querySelector(".compare-scene")?.classList.add("win-motion");}
+      $("#compareFeedback").innerHTML=ok?"<strong>صحيح.</strong> المقارنة تمت من أكبر منزلة.":"راجع أول منزلة يختلف عندها العددان.";
     });
   }else if(s.id==="order"){
     state.orderPick=[];
     $$("#orderPick button").forEach(b=>b.onclick=()=>{if(b.classList.contains("used"))return;b.classList.add("used");state.orderPick.push(+b.dataset.n);$("#orderResult").innerHTML=state.orderPick.map(formatN).map(x=>`<span>${x}</span>`).join(" ← ");});
-    $("#checkOrder").onclick=()=>{const ans=$(".try-card").dataset.answer,ok=state.orderPick.join(",")===ans;toast(ok?"ترتيب صحيح 🌟":"راجع ترتيب الأعداد");};
+    $("#checkOrder").onclick=()=>{
+      const card=$(".try-card"),ans=card.dataset.answer,ok=state.orderPick.join(",")===ans;
+      if(ok && card.dataset.rewarded!=="1"){card.dataset.rewarded="1";celebrateReward(1,"ترتيب صحيح ⭐");}
+      else toast(ok?"ترتيب صحيح 🌟":"راجع ترتيب الأعداد");
+    };
     $("#resetOrder").onclick=()=>setTab("try");
   }else if(["round10_100","round1000"].includes(s.id)){
-    $$("#roundOpts .option").forEach(b=>b.onclick=()=>{const ok=+b.dataset.value===+b.closest(".try-card").dataset.answer;b.classList.add(ok?"correct":"wrong");$("#roundFeedback").innerHTML=ok?"<strong>أحسنت 🌟</strong> اخترت الجهة الأقرب بصورة صحيحة.":"قارن موقع العدد بالمنتصف مرة أخرى.";});
+    $$("#roundOpts .option").forEach(b=>b.onclick=()=>{
+      const card=b.closest(".try-card"),ok=+b.dataset.value===+card.dataset.answer;
+      b.classList.add(ok?"correct":"wrong");
+      if(ok && card.dataset.rewarded!=="1"){
+        card.dataset.rewarded="1";
+        celebrateReward(1,"تقريب صحيح ⭐");
+        card.querySelector(".round-scene")?.classList.add("win-motion");
+      }
+      $("#roundFeedback").innerHTML=ok?"<strong>أحسنت 🌟</strong> اخترت الجهة الأقرب بصورة صحيحة.":"قارن موقع العدد بالمنتصف مرة أخرى.";
+    });
   }else{
     state.orderPick=[];
     $$("#stepPick button").forEach(b=>b.onclick=()=>{if(b.classList.contains("used"))return;b.classList.add("used");state.orderPick.push(b.dataset.step);$("#stepResult").textContent=state.orderPick.join(" ← ");});
-    $("#checkSteps").onclick=()=>toast(state.orderPick.join("|")==="أفهم|أخطط|أحل|أتحقق"?"الترتيب صحيح 🌟":"راجع الخطوات الأربع");
+    $("#checkSteps").onclick=()=>{
+      const card=$(".try-card"),ok=state.orderPick.join("|")==="أفهم|أخطط|أحل|أتحقق";
+      if(ok && card?.dataset.rewarded!=="1"){if(card)card.dataset.rewarded="1";celebrateReward(1,"اكتملت خطوات المحقق ⭐");}
+      else toast(ok?"الترتيب صحيح 🌟":"راجع الخطوات الأربع");
+    };
     $("#resetSteps").onclick=()=>setTab("try");
   }
 }
@@ -940,19 +1084,21 @@ function bindTry(){
 function makeQuestion(skill, hard=false){
   const id=skill.id;
   if(id==="patterns"){
-    const step=pick([2,5,10,-2,-5,-10]), start=rand(step<0?50:2,step<0?90:25), seq=[start,start+step,start+2*step,start+3*step], ans=start+4*step;
-    const candidates=[ans, ans+step, ans-step, ans+(step>0?5:-5), ans+(step>0?10:-10), ans-(step>0?5:-5)];
-    const options=[...new Set(candidates)].filter(x=>x!==seq[3]).slice(0,4);
-    while(options.length<4) options.push(ans + rand(-3,3)*Math.max(2,Math.abs(step)));
-    if(!options.includes(ans)) options[0]=ans;
+    const step=pick([2,5,10,-2,-5,-10]);
+    const absStep=Math.abs(step);
+    const start=step<0?rand(absStep*5,absStep*10):rand(2,25);
+    const seq=[start,start+step,start+2*step,start+3*step];
+    const ans=start+4*step;
+    const candidates=[ans+absStep,ans-absStep,ans+2*absStep,ans-2*absStep].filter(v=>v>=0 && v!==seq[3]);
+    const options=safeNumberOptions(ans,candidates,4,0);
     return {
       prompt:`أكمل النمط: ${seq.map(formatN).join(" ، ")} ، ؟`,
-      options:shuffle([...new Set(options)]).slice(0,4),
+      options,
       answer:ans,
       hint:"احسب الفرق بين كل عددين متتاليين.",
-      explain:`القاعدة هي ${step>0?"أزيد":"أنقص"} ${formatN(Math.abs(step))}.`,
+      explain:`القاعدة هي ${step>0?"أزيد":"أنقص"} ${formatN(absStep)}.`,
       seq, stepVal:step, engine:"🚂",
-      diffLabels:Array(4).fill(`${step>0?"+":"−"} ${formatN(Math.abs(step))}`)
+      diffLabels:Array(4).fill(`${step>0?"+":"−"} ${formatN(absStep)}`)
     };
   }
   if(id==="solve"){
@@ -966,13 +1112,16 @@ function makeQuestion(skill, hard=false){
     return {prompt:q.p,options:opts,answer:q.a,hint:q.h,explain:q.e,title:q.title,clue:q.clue};
   }
   if(["place","thousands","tenThousands"].includes(id)){
-    const len=id==="tenThousands"?5:id==="thousands"?4:3, min=10**(len-1), n=rand(min,10**len-1), pos=rand(0,len-1), digit=+String(n)[pos], power=len-1-pos, ans=digit*(10**power);
-    const vals=shuffle([...new Set([ans,digit, digit*10, digit*100, digit*1000, digit*10000].filter(v=>v<10**(len+1)))]);
-    while(vals.length<4) vals.push(ans + rand(1,3)*(10**Math.max(0,power-1)));
+    const len=id==="tenThousands"?5:id==="thousands"?4:3, min=10**(len-1);
+    const n=rand(min,10**len-1), digits=String(n);
+    const validPositions=digits.split("").map((d,i)=>d!=="0"?i:null).filter(i=>i!==null);
+    const pos=pick(validPositions), digit=+digits[pos], power=len-1-pos, ans=digit*(10**power);
     const placeLabels=placeNamesFor(len);
+    const candidates=[digit,digit*10,digit*100,digit*1000,digit*10000]
+      .filter(v=>v>=0 && v<10**(len+1) && v!==ans);
     return {
       prompt:`ما قيمة الرقم ${arNum(digit)} في العدد ${formatN(n)}؟`,
-      options:shuffle([...new Set(vals)]).slice(0,4),
+      options:safeNumberOptions(ans,candidates,4,0),
       answer:ans,
       hint:"حدد منزلة الرقم أولًا، ثم اضربه في قيمة المنزلة.",
       explain:`الرقم ${arNum(digit)} في منزلة ${placeLabels[power]}، لذلك قيمته ${formatN(ans)}.`,
@@ -1001,8 +1150,10 @@ function makeQuestion(skill, hard=false){
     const opt1=shuffle(nums).join("-");
     const opt2=(askAsc?desc:asc).join("-");
     const opt3=[...correctArr].sort(()=>Math.random()-.5).join("-");
-    const options=[ans,opt1,opt2,opt3].filter((v,i,a)=>a.indexOf(v)===i);
-    while(options.length<4) options.push(shuffle(nums).join("-"));
+    const optionSet=new Set([ans,opt1,opt2,opt3]);
+    let orderGuard=0;
+    while(optionSet.size<4 && orderGuard<40){optionSet.add(shuffle(nums).join("-"));orderGuard++;}
+    const options=[...optionSet].slice(0,4);
     return {
       prompt:`اختر الترتيب ${askAsc?"من الأصغر إلى الأكبر":"من الأكبر إلى الأصغر"}`,
       options:shuffle(options).map(x=>x.split("-").map(n=>formatN(+n)).join(" ، ")),
@@ -1082,7 +1233,7 @@ function answerPatternQuiz(btn,q){
   state.quiz.answered=true;
   const chosen = +btn.dataset.answer;
   const ok = chosen===+q.answer;
-  if(ok) state.quiz.score++;
+  if(ok){ state.quiz.score++; celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐"); }
   const wagon=$("#patternQuestionWagon");
   wagon.textContent=formatN(chosen);
   wagon.classList.add(ok?"correct-fill":"wrong-fill");
@@ -1180,7 +1331,7 @@ function answerSolveQuiz(btn,q){
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const ok = btn.dataset.answer===q.answer;
-  if(ok) state.quiz.score++;
+  if(ok){ state.quiz.score++; celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐"); }
   btn.classList.add(ok?"correct":"wrong");
   $$("#quizOptions .step-option").forEach(b=>{ if(b.dataset.answer===q.answer) b.classList.add("correct"); });
   const f=$("#quizFeedback");
@@ -1242,7 +1393,7 @@ function answerPlaceQuiz(btn,q){
   state.quiz.answered=true;
   const chosen=+btn.dataset.answer;
   const ok = chosen===+q.answer;
-  if(ok) state.quiz.score++;
+  if(ok){ state.quiz.score++; celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐"); }
   btn.classList.add(ok?"correct":"wrong");
   $$("#quizOptions .place-option").forEach(b=>{ if(+b.dataset.answer===+q.answer) b.classList.add("correct"); });
   const f=$("#quizFeedback");
@@ -1282,15 +1433,19 @@ function renderSolveErrorGame(){
 function makePlaceErrorCase(len=3){
   const n=makePlaceLabNumber(len);
   const digits=String(n).split("").map(Number);
-  const pos=rand(0,len-1);
+  const validPositions=digits.map((d,i)=>{
+    const power=len-1-i;
+    return (d!==0 && power>0)?i:null;
+  }).filter(i=>i!==null);
+  const pos=pick(validPositions);
   const digit=digits[pos];
   const power=len-1-pos;
   const labels=placeNamesFor(len);
   const correct=digit*(10**power);
-  const wrong= digit;
-  const options=shuffle([...new Set([correct, wrong, digit*(10**Math.max(0,power-1)), digit*(10**Math.min(len-1,power+1))])]).slice(0,4);
-  if(!options.includes(correct)) options[0]=correct;
-  return {n,digit,power,placeName:labels[power],correct,wrong,options:[...new Set(options)].slice(0,4)};
+  const wrong=digit;
+  const candidates=[wrong,digit*(10**Math.max(0,power-1)),digit*(10**Math.min(len-1,power+1))].filter(v=>v!==correct);
+  const options=safeNumberOptions(correct,candidates,4,0);
+  return {n,digit,power,placeName:labels[power],correct,wrong,options};
 }
 function renderPlaceErrorGame(skill){
   const len=skill.id==="tenThousands"?5:skill.id==="thousands"?4:3;
@@ -1374,7 +1529,7 @@ function answerCompareQuiz(btn,q){
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const ok=btn.dataset.answer===q.answer;
-  if(ok) state.quiz.score++;
+  if(ok){ state.quiz.score++; celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐"); }
   btn.classList.add(ok?"correct":"wrong");
   $$("#quizOptions .compare-choice").forEach(b=>{ if(b.dataset.answer===q.answer) b.classList.add("correct"); });
   const f=$("#quizFeedback");
@@ -1421,7 +1576,7 @@ function answerOrderQuiz(btn,q){
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const ok=btn.dataset.answer===q.answer;
-  if(ok) state.quiz.score++;
+  if(ok){ state.quiz.score++; celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐"); }
   btn.classList.add(ok?"correct":"wrong");
   $$("#quizOptions .lane-choice").forEach(b=>{ if(b.dataset.answer===q.answer) b.classList.add("correct"); });
   const f=$("#quizFeedback");
@@ -1515,7 +1670,20 @@ function renderRoundQuiz(qz,q){
   $("#hintBtn").onclick=()=>{const h=$("#quizHint");h.hidden=false;h.textContent=q.hint;};
   $("#nextQ").onclick=()=>{state.quiz.index++;state.quiz.answered=false;renderQuiz();};
 }
-function answerRoundQuiz(btn,q){if(state.quiz.answered)return;state.quiz.answered=true;const chosen=+btn.dataset.answer,ok=chosen===+q.answer;if(ok)state.quiz.score++;btn.classList.add(ok?"correct":"wrong");$$("#quizOptions .round-choice").forEach(b=>{if(+b.dataset.answer===+q.answer)b.classList.add("correct")});const f=$("#quizFeedback");f.hidden=false;f.innerHTML=ok?`<strong>أحسنت 🌟</strong><br>${q.explain}`:`<strong>راجع موضع العدد بالنسبة إلى المنتصف.</strong><br>${q.explain}`;$("#nextQ").classList.remove("hidden")}
+function answerRoundQuiz(btn,q){
+  if(state.quiz.answered)return;
+  state.quiz.answered=true;
+  const chosen=+btn.dataset.answer,ok=chosen===+q.answer;
+  if(ok){
+    state.quiz.score++;
+    celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐");
+  }
+  btn.classList.add(ok?"correct":"wrong");
+  $$("#quizOptions .round-choice").forEach(b=>{if(+b.dataset.answer===+q.answer)b.classList.add("correct")});
+  const f=$("#quizFeedback");f.hidden=false;
+  f.innerHTML=ok?`<strong>أحسنت 🌟</strong><br>${q.explain}`:`<strong>راجع موضع العدد بالنسبة إلى المنتصف.</strong><br>${q.explain}`;
+  $("#nextQ").classList.remove("hidden");
+}
 function makeRoundErrorCase(skill){const isThousand=skill.id==="round1000";const to=isThousand?1000:pick([10,100]);const n=isThousand?rand(1100,8900):rand(120,980);const low=Math.floor(n/to)*to,high=low+to,correct=Math.round(n/to)*to,wrong=correct===low?high:low,midpoint=low+to/2;return{n,to,low,high,correct,wrong,midpoint,isThousand}}
 function renderRoundErrorGame(skill){state.roundError=makeRoundErrorCase(skill);const g=state.roundError,pct=((g.n-g.low)/(g.high-g.low))*90+5;return `<article class="round-error-card"><span class="eyebrow">🩺 ${g.isThousand?"عيادة برج الألف":"عيادة التقريب"}</span><h3>أصلح قرار التقريب</h3><p>اختار أحد الطلاب جهة التقريب الخطأ. حدّد النتيجة الصحيحة وأصلح القرار.</p><div class="round-wrong-badge">❌ قال الطالب: ${formatN(g.n)} ≈ ${formatN(g.wrong)}</div><div class="round-scene ${g.isThousand?"thousand-scene":""}"><div class="round-road"><div class="round-track"></div><div class="round-end" style="left:5%"><b>${formatN(g.low)}</b><small>${g.isThousand?"ألف":"طرف"}</small></div><div class="round-end" style="left:95%"><b>${formatN(g.high)}</b><small>${g.isThousand?"ألف":"طرف"}</small></div><div class="round-target-marker" style="left:${pct}%"><span class="marker-number">${formatN(g.n)}</span><span class="marker-arrow"></span></div><div class="round-midpoint">المنتصف ${formatN(g.midpoint)}</div></div></div><div class="round-choice-grid"><button class="option round-choice" data-round-error-pick="${g.low}">${formatN(g.low)}</button><button class="option round-choice" data-round-error-pick="${g.high}">${formatN(g.high)}</button></div><div class="round-helper"><img src="./assets/rashid-basmah.png" alt="راشد وبسمة" /><div><b>راشد وبسمة:</b><span>${g.isThousand?"انظر إلى منزلة المئات أو إلى موضع العدد بالنسبة إلى منتصف الألفين.":"حدّد المنتصف أولًا، ثم اختر الطرف الأقرب."}</span></div></div><div class="round-feedback" id="roundErrorFeedback">💡 افحص موضع العدد على الطريق قبل أن تختار.</div><div class="cta-row"><button class="btn secondary" id="revealRoundFix">أظهر التصحيح</button><button class="btn" id="newRoundError">جولة جديدة</button></div><div class="round-feedback" id="roundErrorFix" hidden></div></article>`}
 
@@ -1555,7 +1723,10 @@ function answerQuiz(btn,q){
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const raw=btn.dataset.answer, right=normalizeAnswer(q.answer), isNum=typeof q.answer==="number", ok=isNum?+raw===+q.answer:raw===right;
-  if(ok)state.quiz.score++;
+  if(ok){
+    state.quiz.score++;
+    celebrateReward(state.quiz.type==="challenge"?2:1,state.quiz.type==="challenge"?"نجمتان لتحدي رائع ⭐⭐":"نجمة جديدة ⭐");
+  }
   btn.classList.add(ok?"correct":"wrong");
   $$("#quizOptions .option").forEach(b=>{
     const isCorrect=isNum?+b.dataset.answer===+q.answer:b.dataset.answer===right;
@@ -1567,6 +1738,8 @@ function answerQuiz(btn,q){
 function finishQuiz(){
   const qz=state.quiz, pct=Math.round(qz.score/qz.count*100), old=mastery[state.skill.id]||0;
   if(pct>old){mastery[state.skill.id]=pct;saveMastery()}
+  if(pct>=80 && old<80) celebrateReward(3,"شارة إتقان جديدة 🏆");
+  $("#skillMiniScore").textContent=arNum(mastery[state.skill.id]||0)+"٪";
   $("#skillPanel").innerHTML=`<article class="mastery-card">
     <span class="eyebrow">📊 نتيجة ${qz.type==="challenge"?"التحدي":"التدريب"}</span>
     <h3>${pct>=80?"أتقنت المهارة 🌟":pct>=60?"أنت قريب من الإتقان":"نحتاج جولة دعم قصيرة"}</h3>
@@ -1735,6 +1908,20 @@ function renderClinic(){
   $$("[data-open-skill]").forEach(b=>b.onclick=()=>{openSkill(b.dataset.openSkill,"learn");setTab("error")});
 }
 
+
+function chapterQuestionContext(q){
+  if(q.skill?.id==="solve"){
+    return `<div class="feedback"><b>${q.title||"ملف القضية"}</b><br>${q.clue||""}</div>`;
+  }
+  if(q.skill?.id==="compare"){
+    return `<div class="example-big">${formatN(q.a)} <span style="color:var(--gold)">؟</span> ${formatN(q.b)}</div>`;
+  }
+  if(q.skill?.id==="order"){
+    return `<div class="feedback"><b>الأعداد:</b> ${q.nums.map(n=>formatN(n)).join(" ، ")}</div>`;
+  }
+  return "";
+}
+
 /* تحدي الفصل */
 function startChallenge(){
   state.challenge={i:0,score:0,questions:[]};
@@ -1756,13 +1943,14 @@ function renderChapterQ(){
   $("#challengeBox").innerHTML=`<span class="eyebrow">${q.skill.icon} ${q.skill.title}</span>
     <div class="quiz-meta"><span>المهمة ${arNum(c.i+1)} / ${arNum(c.questions.length)}</span><span>النقاط: ${arNum(c.score)}</span></div>
     <div class="question">${q.prompt}</div>
+    ${chapterQuestionContext(q)}
     <div class="options" id="chapterOpts">${q.options.map(o=>`<button class="option" data-answer="${String(o).replaceAll('"','&quot;')}">${typeof o==="number"?formatN(o):o}</button>`).join("")}</div>
     <div class="feedback" id="chapterFeed" hidden></div><div class="cta-row"><button class="btn hidden" id="chapterNext">التالي</button></div>`;
   let answered=false;
   $$("#chapterOpts .option").forEach(b=>b.onclick=()=>{
     if(answered)return;answered=true;
     const isNum=typeof q.answer==="number",ok=isNum?+b.dataset.answer===+q.answer:b.dataset.answer===String(q.answer);
-    if(ok)c.score++;
+    if(ok){c.score++;celebrateReward(2,"نجمتان في تحدي الفصل ⭐⭐");}
     b.classList.add(ok?"correct":"wrong");
     $$("#chapterOpts .option").forEach(x=>{if(isNum?+x.dataset.answer===+q.answer:x.dataset.answer===String(q.answer))x.classList.add("correct")});
     const f=$("#chapterFeed");f.hidden=false;f.innerHTML=`<strong>${ok?"صحيح 🌟":"راجع الفكرة"}</strong><br>${q.explain}`;
@@ -1787,7 +1975,7 @@ $("#newMascotMessage")?.addEventListener("click", ()=> {
 });
 
 
-/* V1.9: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
+/* V2.0: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
 async function clearLegacyAppCache(){
   try{
     if("serviceWorker" in navigator){
@@ -1798,16 +1986,34 @@ async function clearLegacyAppCache(){
       const keys = await caches.keys();
       await Promise.all(keys.map(k=>caches.delete(k)));
     }
-    const flagKey="cityNumbersCacheReset_190";
+    const flagKey="cityNumbersCacheReset_200";
     if(!sessionStorage.getItem(flagKey)){
       sessionStorage.setItem(flagKey,"1");
-      console.log("City Numbers V1.9 cache cleaned.");
+      console.log("City Numbers V2.0 cache cleaned.");
     }
   }catch(e){
     console.warn("Cache cleanup skipped", e);
   }
 }
 window.addEventListener("load", clearLegacyAppCache);
+
+
+/* بطاقة الإنجاز + الاسم المحلي */
+$("#studentNameInput")?.addEventListener("input", e=>{
+  studentName=(e.target.value||"").slice(0,40);
+  saveStudentName();
+});
+$("#achievementBtn")?.addEventListener("click", openAchievement);
+$("#achievementBtn2")?.addEventListener("click", openAchievement);
+$("#closeAchievement")?.addEventListener("click", ()=>$("#achievementDialog").close());
+$("#closeAchievement2")?.addEventListener("click", ()=>$("#achievementDialog").close());
+$("#printAchievement")?.addEventListener("click", ()=>{
+  renderAchievementCard();
+  document.body.classList.add("printing-achievement");
+  window.print();
+  setTimeout(()=>document.body.classList.remove("printing-achievement"),500);
+});
+
 
 /* تهيئة */
 renderStudent();

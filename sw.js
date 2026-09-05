@@ -1,3 +1,4 @@
+/* مدينة الأعداد V2.0 — تنظيف الكاش القديم */
 
 self.addEventListener("install", event => {
   self.skipWaiting();
