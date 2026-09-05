@@ -25,45 +25,93 @@
     </header>
 
     <main>
+      
       <!-- الرئيسية -->
       <section class="screen active" id="homeScreen">
-        <div class="hero">
-          <div class="city-scene" aria-hidden="true">
-            <div class="moon">✦</div>
-            <div class="building b1"><span>٣</span></div>
-            <div class="building b2"><span>١٠</span></div>
-            <div class="building b3"><span>١٠٠</span></div>
-            <div class="building b4"><span>١٠٠٠</span></div>
-            <div class="building b5"><span>١٠٠٠٠</span></div>
-            <div class="road"><i></i><i></i><i></i><i></i></div>
-          </div>
-          <div class="hero-copy glass">
-            <img class="hero-logo" src="./assets/forum-logo.jpg" alt="ملتقى التعليم التفاعلي" />
-            <span class="eyebrow">رياضيات • الصف الثالث الابتدائي</span>
-            <h1>مدينة الأعداد <em>رحلة الإتقان</em></h1>
-            <p>اكتشف • ابنِ • قارن • رتّب • قرّب • أتقن</p>
-            <div class="portal-actions">
-              <button class="portal student" data-go="studentScreen">
-                <span class="portal-icon">🎒</span>
-                <span><b>بوابة الطالب</b><small>أفهم • أجرّب • أتدرّب • أتحدّى</small></span>
-              </button>
-              <button class="portal teacher" data-go="teacherScreen">
-                <span class="portal-icon">🧑‍🏫</span>
-                <span><b>بوابة المعلم</b><small>اشرح • طبّق • تحدَّ • قوِّم</small></span>
-              </button>
+        <div class="hero playground-hero">
+          <div class="city-scene fun-city-scene" aria-hidden="true">
+            <div class="sun-smile">☀️</div>
+            <div class="cloud c1"></div>
+            <div class="cloud c2"></div>
+            <div class="cloud c3"></div>
+            <div class="balloon bl1">٣</div>
+            <div class="balloon bl2">١٠</div>
+            <div class="balloon bl3">١٠٠</div>
+            <div class="balloon bl4">١٠٠٠</div>
+            <div class="toy-city">
+              <div class="toy-house h1">🚂</div>
+              <div class="toy-house h2">🏗️</div>
+              <div class="toy-house h3">⚖️</div>
+              <div class="toy-house h4">🎯</div>
+              <div class="toy-house h5">🏰</div>
             </div>
-            <div class="quick-actions">
-              <button data-go="studentScreen" data-focus-map="1">🗺️ خريطة المهارات</button>
-              <button data-go="challengeScreen">🏆 تحدي الفصل</button>
-              <button data-go="clinicScreen">🩺 عيادة الأخطاء</button>
+            <div class="toy-road"></div>
+          </div>
+
+          <div class="hero-grid">
+            <div class="kids-stage glass">
+              <div class="kids-stage-badge">٩ ألعاب تعليمية</div>
+              <img class="kids-hero-image big-kids-image" src="./assets/rashid-basmah.png" alt="الشخصيتان راشد وبسمة" />
+              <div class="speech-bubble giant-bubble">
+                <b>مرحبًا! نحن راشد وبسمة 👋</b>
+                <small>سنرافقك في رحلة مليئة بالألعاب الممتعة حتى تتقن مهارات القيمة المنزلية.</small>
+              </div>
+            </div>
+
+            <div class="hero-copy glass playful-copy">
+              <img class="hero-logo" src="./assets/forum-logo.jpg" alt="ملتقى التعليم التفاعلي" />
+              <span class="eyebrow">رياضيات • الصف الثالث الابتدائي</span>
+              <h1>مدينة الأعداد <em>رحلة الإتقان</em></h1>
+              <p>كل مهارة لعبة مستقلة: اكتشف • ابنِ • قارن • رتّب • قرّب • أتقن</p>
+
+              <div class="hero-badges">
+                <span>🚂 أنماط</span>
+                <span>🏗️ منازل</span>
+                <span>⚖️ مقارنة</span>
+                <span>🎯 تقريب</span>
+              </div>
+
+              <div class="portal-actions">
+                <button class="portal student childlike-portal" data-go="studentScreen">
+                  <span class="portal-icon">🎒</span>
+                  <span><b>بوابة الطالب</b><small>ادخل مدينة الألعاب التعليمية وابدأ رحلتك</small></span>
+                </button>
+                <button class="portal teacher" data-go="teacherScreen">
+                  <span class="portal-icon">🧑‍🏫</span>
+                  <span><b>بوابة المعلم</b><small>دروس سريعة • مراجعة صفية • تقويم</small></span>
+                </button>
+              </div>
+
+              <div class="quick-actions">
+                <button data-go="studentScreen" data-focus-map="1">🗺️ خريطة المهارات</button>
+                <button data-go="challengeScreen">🏆 تحدي الفصل</button>
+                <button data-go="clinicScreen">🩺 عيادة الأخطاء</button>
+              </div>
             </div>
           </div>
         </div>
+
+        <div class="game-world glass">
+          <div class="game-world-head">
+            <div>
+              <span class="eyebrow">🎮 عالم المهارات</span>
+              <h2>كل محطة لعبة مستقلة</h2>
+              <p>اختر أي مهارة من هنا، وادخل لعبتها التعليمية مباشرة.</p>
+            </div>
+            <div class="mini-counter">
+              <b>٩</b>
+              <small>محطات</small>
+            </div>
+          </div>
+          <div class="home-games" id="homeGameWorld"></div>
+        </div>
+
         <div class="home-note">
           <b>الفصل الأول: القيمة المنزلية</b>
-          <span>مراجعة تفاعلية متدرجة تبني الفهم قبل الاختبار.</span>
+          <span>مشهد طفولي مبهج يساعد الطالب على الفهم والمراجعة بطريقة محببة.</span>
         </div>
       </section>
+
 
       <!-- بوابة الطالب -->
       <section class="screen" id="studentScreen">
@@ -74,6 +122,18 @@
             <p>اختر طريقك، ثم ابدأ من المهارة التي تحتاجها.</p>
           </div>
           <div class="mastery-ring" id="overallRing"><b>٠٪</b><small>إتقان عام</small></div>
+        </div>
+
+        <div class="student-welcome-card glass">
+          <div class="student-welcome-text">
+            <span class="eyebrow">🌟 رفيقا الرحلة</span>
+            <h3>راشد وبسمة يرافقانك في التعلم</h3>
+            <p id="mascotLine">ابدأ من «أريد أن أفهم»، ثم انتقل إلى التدريب والتحدي بالتدرج.</p>
+            <div class="cta-row">
+              <button class="btn mint" id="mascotTipBtn">💡 نصيحة من راشد وبسمة</button>
+            </div>
+          </div>
+          <img class="student-mascot-image" src="./assets/rashid-basmah.png" alt="الشخصيتان راشد وبسمة" />
         </div>
 
         <div class="mode-grid">
@@ -166,6 +226,20 @@
         <div class="clinic-grid" id="clinicGrid"></div>
       </section>
     </main>
+
+
+    <button class="mascot-fab" id="mascotFab" aria-label="مساعدة راشد وبسمة">💬</button>
+    <div class="mascot-panel hidden-panel" id="mascotPanel">
+      <div class="mascot-panel-head">
+        <b>راشد وبسمة</b>
+        <button class="icon-btn small-btn" id="closeMascotPanel">✕</button>
+      </div>
+      <img class="panel-character-image" src="./assets/rashid-basmah.png" alt="راشد وبسمة" />
+      <p id="mascotPanelText">اضغط على أي مهارة، وسنرافقك خطوة خطوة حتى تتقنها.</p>
+      <div class="cta-row">
+        <button class="btn secondary" id="newMascotMessage">رسالة تشجيع</button>
+      </div>
+    </div>
 
     <footer>
       <img class="footer-logo" src="./assets/forum-logo.jpg" alt="" />

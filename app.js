@@ -148,6 +148,46 @@ const state = {
   quiz:null, orderPick:[], challenge:{i:0,score:0,questions:[]}
 };
 
+const mascotMessages = [
+  "ابدأ من الفهم أولًا، ثم انتقل إلى التدريب خطوة خطوة.",
+  "إذا أخطأت فلا تقلق، الخطأ يساعدك على التعلّم 🌟",
+  "في القيمة المنزلية: انظر إلى منزلة الرقم قبل أن تحدد قيمته.",
+  "في المقارنة: ابدأ من أكبر منزلة، ثم انتقل إلى التالية.",
+  "في التقريب: انظر إلى الرقم الذي على يمين منزلة التقريب.",
+  "في الأنماط العددية: اكتشف الفرق بين كل عدد والذي يليه.",
+  "يمكنك العودة لأي مهارة في أي وقت ومراجعتها من جديد."
+];
+
+const modeLines = {
+  learn: "رائع! ابدأ بالفهم، ثم جرّب المهارة بيدك حتى تتضح الفكرة.",
+  practice: "أحسنت! التدريب المتدرج يساعدك على الوصول إلى الإتقان.",
+  challenge: "ممتاز! الآن اختبر نفسك، وأظهر مدى إتقانك للمهارة."
+};
+
+const homeGameAccents = [
+  "rgba(255,210,100,.45)",
+  "rgba(139,231,183,.42)",
+  "rgba(145,228,255,.42)",
+  "rgba(255,181,210,.40)",
+  "rgba(213,203,255,.40)",
+  "rgba(255,224,143,.42)",
+  "rgba(170,231,255,.42)",
+  "rgba(255,197,120,.38)",
+  "rgba(188,168,255,.38)"
+];
+const homeGameTags = {
+  patterns:["اكتشف","أكمل"],
+  solve:["افهم","خطط"],
+  place:["ابنِ","حدّد"],
+  thousands:["اكتب","حلّل"],
+  tenThousands:["كوّن","اقرأ"],
+  compare:["قارن","اختر"],
+  order:["رتّب","اسحب"],
+  round10_100:["قرّب","خط أعداد"],
+  round1000:["ألف","فسّر"]
+};
+
+
 const $ = s=>document.querySelector(s);
 const $$ = s=>[...document.querySelectorAll(s)];
 const mastery = JSON.parse(localStorage.getItem("cityMastery")||"{}");
@@ -160,7 +200,9 @@ function go(id){
   $$(".screen").forEach(s=>s.classList.toggle("active",s.id===id));
   $("#backBtn").classList.toggle("hidden",id==="homeScreen");
   window.scrollTo({top:0,behavior:"smooth"});
-  if(id==="studentScreen") renderStudent();
+  if(id==="homeScreen") renderHomeGames();
+  if(id==="studentScreen") renderHomeGames();
+renderStudent();
   if(id==="teacherScreen") renderTeacher();
   if(id==="clinicScreen") renderClinic();
   if(id==="challengeScreen") startChallenge();
@@ -180,16 +222,38 @@ function overall(){
   const vals=skills.map(s=>mastery[s.id]||0);
   return Math.round(vals.reduce((a,b)=>a+b,0)/skills.length);
 }
+
+function renderHomeGames(){
+  const box=$("#homeGameWorld");
+  if(!box) return;
+  box.innerHTML = skills.map((s,i)=>{
+    const m = mastery[s.id]||0;
+    const tags = (homeGameTags[s.id]||["تعلّم","العب"]).map(t=>`<span>${t}</span>`).join("");
+    return `<button class="game-island" data-home-skill="${s.id}" style="--accent:${homeGameAccents[i % homeGameAccents.length]}">
+      <div class="game-no">${arNum(i+1)}</div>
+      <div class="game-icon">${s.icon}</div>
+      <h3>${s.place}</h3>
+      <p>${s.title}</p>
+      <div class="game-tags">${tags}</div>
+      <div class="game-footer"><small>إتقانك: ${arNum(m)}٪</small><span class="play-btn">ابدأ اللعبة</span></div>
+    </button>`;
+  }).join("");
+  $$("[data-home-skill]").forEach(btn => btn.onclick = () => openSkill(btn.dataset.homeSkill, "learn"));
+}
+
 function renderStudent(){
   const ov=overall(), deg=Math.round(ov*3.6);
   $("#overallRing").style.background=`conic-gradient(var(--gold) ${deg}deg,rgba(255,255,255,.08) 0)`;
   $("#overallRing b").textContent=arNum(ov)+"٪";
+  if($("#mascotLine")) $("#mascotLine").textContent = modeLines[state.mode] || modeLines.learn;
+  renderHomeGames();
   $("#skillMap").innerHTML=skills.map((s,i)=>{
     const m=mastery[s.id]||0;
     return `<button class="skill-card ${m>=80?"done":""}" data-skill="${s.id}">
       <span class="num">${arNum(i+1)}</span><span class="icon">${s.icon}</span>
       <b>${s.place}</b><small>${s.title}</small>
       <div class="progress"><i style="width:${m}%"></i></div>
+      <div class="game-footer"><small>${m?`إتقانك: ${arNum(m)}٪`:"ابدأ من هنا"}</small><span class="play-btn">العب الآن</span></div>
     </button>`;
   }).join("");
   $$("#skillMap [data-skill]").forEach(b=>b.onclick=()=>openSkill(b.dataset.skill,state.mode));
@@ -197,8 +261,15 @@ function renderStudent(){
 $$(".mode-card").forEach(b=>b.onclick=()=>{
   state.mode=b.dataset.mode;
   $$(".mode-card").forEach(x=>x.classList.toggle("selected",x===b));
+  if($("#mascotLine")) $("#mascotLine").textContent = modeLines[state.mode] || modeLines.learn;
   toast(state.mode==="learn"?"اختر مهارة لتبدأ بالفهم":state.mode==="practice"?"اختر مهارة لبدء التدريب":"اختر مهارة لبدء التحدي");
 });
+
+function setMascotMessage(msg){
+  if($("#mascotLine")) $("#mascotLine").textContent = msg;
+  if($("#mascotPanelText")) $("#mascotPanelText").textContent = msg;
+}
+
 
 function openSkill(id,mode="learn"){
   state.skill=skills.find(s=>s.id===id)||skills[0];
@@ -893,6 +964,21 @@ function renderChapterQ(){
   });
   $("#chapterNext").onclick=()=>{c.i++;renderChapterQ()};
 }
+
+/* راشد وبسمة */
+$("#mascotTipBtn")?.addEventListener("click", ()=> {
+  setMascotMessage(mascotMessages[Math.floor(Math.random()*mascotMessages.length)]);
+  toast("رسالة جديدة من راشد وبسمة ✨");
+});
+$("#mascotFab")?.addEventListener("click", ()=> {
+  $("#mascotPanel")?.classList.toggle("hidden-panel");
+});
+$("#closeMascotPanel")?.addEventListener("click", ()=> {
+  $("#mascotPanel")?.classList.add("hidden-panel");
+});
+$("#newMascotMessage")?.addEventListener("click", ()=> {
+  setMascotMessage(mascotMessages[Math.floor(Math.random()*mascotMessages.length)]);
+});
 
 /* تهيئة */
 renderStudent();
