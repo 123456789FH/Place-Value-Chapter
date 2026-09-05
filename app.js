@@ -368,6 +368,7 @@ function openSkill(id,mode="learn"){
   $("#skillBadge").textContent=state.skill.icon;
   $("#skillSceneIcon").textContent=t.scene;
   $("#skillSceneBadge").textContent=t.badge;
+  $("#skillMascotTitle").textContent="راشد وبسمة معك في هذه المهارة";
   $("#skillMascotText").textContent=t.msg;
   $("#skillMiniScore").textContent=arNum(mastery[state.skill.id]||0)+"٪";
   const world=$("#skillWorld");
@@ -526,6 +527,10 @@ function bindPanel(){
     fix.innerHTML=`الترتيب الصحيح ${g.askAsc?"من الأصغر إلى الأكبر":"من الأكبر إلى الأصغر"} هو:<br><b>${g.correctText}</b>`;
   };
   if($("#newOrderError")) $("#newOrderError").onclick=()=>setTab("error");
+
+  $$("[data-round-error-pick]").forEach(b=>b.onclick=()=>{const g=state.roundError;if(!g)return;const val=+b.dataset.roundErrorPick;if(val===+g.correct){b.classList.add("correct");$("#roundErrorFeedback").innerHTML=`<strong>أحسنت 🌟</strong> النتيجة الصحيحة هي <b>${formatN(g.correct)}</b>.`;}else{b.classList.add("wrong");$("#roundErrorFeedback").innerHTML=`ليست هذه الجهة الأقرب. راقب موضع العدد بالنسبة إلى المنتصف.`;}});
+  if($("#revealRoundFix")) $("#revealRoundFix").onclick=()=>{const g=state.roundError;if(!g)return;const fix=$("#roundErrorFix");fix.hidden=false;fix.innerHTML=`التصحيح: <b>${formatN(g.n)} ≈ ${formatN(g.correct)}</b><br>لأن العدد يقع ${g.n>=g.midpoint?"بعد":"قبل"} المنتصف ${formatN(g.midpoint)}، فهو أقرب إلى ${formatN(g.correct)}.`;};
+  if($("#newRoundError")) $("#newRoundError").onclick=()=>setTab("error");
 }
 
 function renderTry(s){
@@ -888,20 +893,18 @@ function tryOrder(){
   </article>`;
 }
 function tryRound(s){
-  const to=s.id==="round1000"?1000:pick([10,100]);
-  const n=s.id==="round1000"?rand(1100,8900):rand(120,980);
-  const low=Math.floor(n/to)*to, high=low+to;
-  const pct=((n-low)/(high-low))*92+4;
+  const isThousand=s.id==="round1000";
+  const to=isThousand?1000:pick([10,100]);
+  const n=isThousand?rand(1100,8900):rand(120,980);
+  const low=Math.floor(n/to)*to, high=low+to, midpoint=low+to/2;
+  const pct=((n-low)/(high-low))*90+5;
   const ans=Math.round(n/to)*to;
-  return `<article class="try-card" data-answer="${ans}">
-    <span class="eyebrow">🎯 خط الأعداد</span><h3>إلى أي عدد هو أقرب؟</h3>
-    <p>قرّب ${formatN(n)} إلى أقرب ${formatN(to)}.</p>
-    <div class="number-line"><div class="line"></div><span class="point" style="left:${pct}%"></span>
-      <span class="target" style="left:${pct}%">${formatN(n)}</span>
-      <span class="label" style="left:4%">${formatN(low)}</span><span class="label" style="left:96%">${formatN(high)}</span>
-    </div>
-    <div class="options" id="roundOpts"><button class="option" data-value="${low}">${formatN(low)}</button><button class="option" data-value="${high}">${formatN(high)}</button></div>
-    <div class="feedback" id="roundFeedback">قارن المسافة إلى الطرفين.</div>
+  return `<article class="try-card round-game-card" data-answer="${ans}">
+    <div class="round-head"><div><span class="eyebrow">${isThousand?"🏰 برج الألف":"🎯 ساحة التقريب"}</span><h3>${isThousand?"اختر بوابة الألف الأقرب":"إلى أي عدد هو أقرب؟"}</h3><p>${isThousand?`ساعد العدد ${formatN(n)} على دخول بوابة الألف الأقرب.`:`قرّب ${formatN(n)} إلى أقرب ${formatN(to)} باستخدام طريق التقريب.`}</p></div></div>
+    <div class="round-scene ${isThousand?"thousand-scene":""}"><div class="round-road"><div class="round-track"></div><div class="round-end" style="left:5%"><b>${formatN(low)}</b><small>الطرف الأول</small></div><div class="round-end" style="left:95%"><b>${formatN(high)}</b><small>الطرف الثاني</small></div><div class="round-target-marker" style="left:${pct}%"><span class="marker-number">${formatN(n)}</span><span class="marker-arrow"></span></div><div class="round-midpoint">المنتصف ${formatN(midpoint)}</div></div>${isThousand?`<div class="castle-gates"><div class="castle-gate">${formatN(low)}<small>بوابة الألف</small></div><div class="castle-gate">${formatN(high)}<small>بوابة الألف</small></div></div>`:""}</div>
+    <div class="round-choice-grid" id="roundOpts"><button class="option round-choice" data-value="${low}">${formatN(low)}</button><button class="option round-choice" data-value="${high}">${formatN(high)}</button></div>
+    <div class="round-helper"><img src="./assets/rashid-basmah.png" alt="راشد وبسمة" /><div><b>راشد وبسمة يقولان:</b><span>${isThousand?"انظر إلى منزلة المئات: إذا كانت ٥ أو أكثر نرفع الألوف.":"قارن موقع العدد بالمنتصف وحدد الطرف الأقرب."}</span></div></div>
+    <div class="round-feedback" id="roundFeedback">ابدأ بمقارنة المسافة إلى الطرفين.</div>
   </article>`;
 }
 function bindTry(){
@@ -924,7 +927,7 @@ function bindTry(){
     $("#checkOrder").onclick=()=>{const ans=$(".try-card").dataset.answer,ok=state.orderPick.join(",")===ans;toast(ok?"ترتيب صحيح 🌟":"راجع ترتيب الأعداد");};
     $("#resetOrder").onclick=()=>setTab("try");
   }else if(["round10_100","round1000"].includes(s.id)){
-    $$("#roundOpts .option").forEach(b=>b.onclick=()=>{const ok=+b.dataset.value===+b.closest(".try-card").dataset.answer;b.classList.add(ok?"correct":"wrong");$("#roundFeedback").innerHTML=ok?"<strong>أحسنت.</strong> اخترت العدد الأقرب.":"قارن المسافة على خط الأعداد مرة أخرى.";});
+    $$("#roundOpts .option").forEach(b=>b.onclick=()=>{const ok=+b.dataset.value===+b.closest(".try-card").dataset.answer;b.classList.add(ok?"correct":"wrong");$("#roundFeedback").innerHTML=ok?"<strong>أحسنت 🌟</strong> اخترت الجهة الأقرب بصورة صحيحة.":"قارن موقع العدد بالمنتصف مرة أخرى.";});
   }else{
     state.orderPick=[];
     $$("#stepPick button").forEach(b=>b.onclick=()=>{if(b.classList.contains("used"))return;b.classList.add("used");state.orderPick.push(b.dataset.step);$("#stepResult").textContent=state.orderPick.join(" ← ");});
@@ -1010,12 +1013,16 @@ function makeQuestion(skill, hard=false){
     };
   }
   if(id==="round10_100"){
-    const to=pick([10,100]), n=rand(120,980), ans=Math.round(n/to)*to;
-    return {prompt:`قرّب ${formatN(n)} إلى أقرب ${formatN(to)}.`,options:shuffle([...new Set([ans,ans+to,Math.max(0,ans-to),Math.floor(n/to)*to])]).slice(0,4),answer:ans,hint:`انظر إلى الرقم الموجود على يمين منزلة ${to===10?"العشرات":"المئات"}.`,explain:`الناتج الأقرب هو ${formatN(ans)}.`};
+    const to=pick([10,100]), n=rand(120,980);
+    const low=Math.floor(n/to)*to, high=low+to, ans=Math.round(n/to)*to;
+    const midpoint=low+to/2;
+    return {prompt:`قرّب ${formatN(n)} إلى أقرب ${formatN(to)}.`,options:[low,high],answer:ans,hint:`انظر إلى الرقم الموجود على يمين منزلة ${to===10?"العشرات":"المئات"}، أو قارن المسافة إلى الطرفين.`,explain:`${formatN(n)} يقع بين ${formatN(low)} و${formatN(high)}، والناتج الأقرب هو ${formatN(ans)}.`,n,to,low,high,midpoint,kind:"round10_100"};
   }
   if(id==="round1000"){
-    const n=rand(1100,8900), ans=Math.round(n/1000)*1000;
-    return {prompt:`قرّب ${formatN(n)} إلى أقرب ألف.`,options:shuffle([...new Set([ans,Math.max(1000,ans-1000),ans+1000,Math.floor(n/1000)*1000])]).slice(0,4),answer:ans,hint:"انظر إلى منزلة المئات.",explain:`الألف الأقرب هو ${formatN(ans)}.`};
+    const to=1000, n=rand(1100,8900);
+    const low=Math.floor(n/to)*to, high=low+to, ans=Math.round(n/to)*to;
+    const midpoint=low+500;
+    return {prompt:`قرّب ${formatN(n)} إلى أقرب ألف.`,options:[low,high],answer:ans,hint:"انظر إلى منزلة المئات، أو قارن المسافة بين العدد وكل ألف مجاور.",explain:`${formatN(n)} يقع بين ${formatN(low)} و${formatN(high)}، والألف الأقرب هو ${formatN(ans)}.`,n,to,low,high,midpoint,kind:"round1000"};
   }
 }
 
@@ -1500,6 +1507,18 @@ function renderOrderErrorGame(){
   </article>`;
 }
 
+function renderRoundQuiz(qz,q){
+  const isThousand=q.kind==="round1000";
+  const pct=((q.n-q.low)/(q.high-q.low))*90+5;
+  $("#skillPanel").innerHTML=`<article class="round-game-card"><div class="round-head"><div><span class="eyebrow">${isThousand?"🏰 برج الألف":"🎯 ساحة التقريب"}</span><h3>${qz.type==="challenge"?(isThousand?"تحدّي البرج الذهبي":"تحدّي الهدف الذهبي"):(isThousand?"تدريب برج الألف":"تدريب ساحة التقريب")}</h3><p>${qz.type==="challenge"?"اختر الجهة الأقرب بسرعة ودقة، واجمع أكبر عدد من النجوم.":"استخدم الطريق البصري وحدد العدد الأقرب."}</p></div><div class="round-meta"><span>${qz.type==="challenge"?"🏆 تحدّي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span><span>⭐ النقاط: ${arNum(qz.score)}</span></div></div><div class="round-scene ${isThousand?"thousand-scene":""}"><div class="round-road"><div class="round-track"></div><div class="round-end" style="left:5%"><b>${formatN(q.low)}</b><small>${isThousand?"بوابة ألف":"طرف"}</small></div><div class="round-end" style="left:95%"><b>${formatN(q.high)}</b><small>${isThousand?"بوابة ألف":"طرف"}</small></div><div class="round-target-marker" style="left:${pct}%"><span class="marker-number">${formatN(q.n)}</span><span class="marker-arrow"></span></div><div class="round-midpoint">المنتصف ${formatN(q.midpoint)}</div></div>${isThousand?`<div class="castle-gates"><div class="castle-gate">${formatN(q.low)}<small>بوابة الألف</small></div><div class="castle-gate">${formatN(q.high)}<small>بوابة الألف</small></div></div>`:""}</div><div class="round-choice-grid" id="quizOptions">${q.options.map(v=>`<button class="option round-choice" data-answer="${v}">${formatN(v)}</button>`).join("")}</div><div class="round-helper"><img src="./assets/rashid-basmah.png" alt="راشد وبسمة" /><div><b>${isThousand?"راشد وبسمة عند برج الألف:":"راشد وبسمة في ساحة التقريب:"}</b><span>${isThousand?"راقب منزلة المئات وحدد أي بوابة ألف أقرب.":"حدّد المنتصف ثم انظر في أي جهة يقع العدد."}</span></div></div><div class="cta-row"><button class="btn secondary" id="hintBtn">💡 ساعدني</button><button class="btn hidden" id="nextQ">التالي</button></div><div id="quizHint" class="hint-box" hidden></div><div id="quizFeedback" class="round-feedback" hidden></div></article>`;
+  $$("#quizOptions .round-choice").forEach(b=>b.onclick=()=>answerRoundQuiz(b,q));
+  $("#hintBtn").onclick=()=>{const h=$("#quizHint");h.hidden=false;h.textContent=q.hint;};
+  $("#nextQ").onclick=()=>{state.quiz.index++;state.quiz.answered=false;renderQuiz();};
+}
+function answerRoundQuiz(btn,q){if(state.quiz.answered)return;state.quiz.answered=true;const chosen=+btn.dataset.answer,ok=chosen===+q.answer;if(ok)state.quiz.score++;btn.classList.add(ok?"correct":"wrong");$$("#quizOptions .round-choice").forEach(b=>{if(+b.dataset.answer===+q.answer)b.classList.add("correct")});const f=$("#quizFeedback");f.hidden=false;f.innerHTML=ok?`<strong>أحسنت 🌟</strong><br>${q.explain}`:`<strong>راجع موضع العدد بالنسبة إلى المنتصف.</strong><br>${q.explain}`;$("#nextQ").classList.remove("hidden")}
+function makeRoundErrorCase(skill){const isThousand=skill.id==="round1000";const to=isThousand?1000:pick([10,100]);const n=isThousand?rand(1100,8900):rand(120,980);const low=Math.floor(n/to)*to,high=low+to,correct=Math.round(n/to)*to,wrong=correct===low?high:low,midpoint=low+to/2;return{n,to,low,high,correct,wrong,midpoint,isThousand}}
+function renderRoundErrorGame(skill){state.roundError=makeRoundErrorCase(skill);const g=state.roundError,pct=((g.n-g.low)/(g.high-g.low))*90+5;return `<article class="round-error-card"><span class="eyebrow">🩺 ${g.isThousand?"عيادة برج الألف":"عيادة التقريب"}</span><h3>أصلح قرار التقريب</h3><p>اختار أحد الطلاب جهة التقريب الخطأ. حدّد النتيجة الصحيحة وأصلح القرار.</p><div class="round-wrong-badge">❌ قال الطالب: ${formatN(g.n)} ≈ ${formatN(g.wrong)}</div><div class="round-scene ${g.isThousand?"thousand-scene":""}"><div class="round-road"><div class="round-track"></div><div class="round-end" style="left:5%"><b>${formatN(g.low)}</b><small>${g.isThousand?"ألف":"طرف"}</small></div><div class="round-end" style="left:95%"><b>${formatN(g.high)}</b><small>${g.isThousand?"ألف":"طرف"}</small></div><div class="round-target-marker" style="left:${pct}%"><span class="marker-number">${formatN(g.n)}</span><span class="marker-arrow"></span></div><div class="round-midpoint">المنتصف ${formatN(g.midpoint)}</div></div></div><div class="round-choice-grid"><button class="option round-choice" data-round-error-pick="${g.low}">${formatN(g.low)}</button><button class="option round-choice" data-round-error-pick="${g.high}">${formatN(g.high)}</button></div><div class="round-helper"><img src="./assets/rashid-basmah.png" alt="راشد وبسمة" /><div><b>راشد وبسمة:</b><span>${g.isThousand?"انظر إلى منزلة المئات أو إلى موضع العدد بالنسبة إلى منتصف الألفين.":"حدّد المنتصف أولًا، ثم اختر الطرف الأقرب."}</span></div></div><div class="round-feedback" id="roundErrorFeedback">💡 افحص موضع العدد على الطريق قبل أن تختار.</div><div class="cta-row"><button class="btn secondary" id="revealRoundFix">أظهر التصحيح</button><button class="btn" id="newRoundError">جولة جديدة</button></div><div class="round-feedback" id="roundErrorFix" hidden></div></article>`}
+
 function normalizeAnswer(v){return typeof v==="number"?String(v):String(v);}
 function startQuiz(type="practice"){
   const count=type==="challenge"?7:5;
@@ -1514,6 +1533,7 @@ function renderQuiz(){
   if(["place","thousands","tenThousands"].includes(state.skill.id)){ renderPlaceQuiz(qz,q); return; }
   if(state.skill.id==="compare"){ renderCompareQuiz(qz,q); return; }
   if(state.skill.id==="order"){ renderOrderQuiz(qz,q); return; }
+  if(["round10_100","round1000"].includes(state.skill.id)){ renderRoundQuiz(qz,q); return; }
   $("#skillPanel").innerHTML=`<article class="practice-card">
     <div class="quiz-meta"><span>${qz.type==="challenge"?"🏆 تحدي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span><span>النقاط: ${arNum(qz.score)}</span></div>
     <div class="question">${q.prompt}</div>
@@ -1531,6 +1551,7 @@ function answerQuiz(btn,q){
   if(["place","thousands","tenThousands"].includes(state.skill.id)){ answerPlaceQuiz(btn,q); return; }
   if(state.skill.id==="compare"){ answerCompareQuiz(btn,q); return; }
   if(state.skill.id==="order"){ answerOrderQuiz(btn,q); return; }
+  if(["round10_100","round1000"].includes(state.skill.id)){ answerRoundQuiz(btn,q); return; }
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const raw=btn.dataset.answer, right=normalizeAnswer(q.answer), isNum=typeof q.answer==="number", ok=isNum?+raw===+q.answer:raw===right;
@@ -1562,6 +1583,7 @@ function renderError(s){
   if(["place","thousands","tenThousands"].includes(s.id)) return renderPlaceErrorGame(s);
   if(s.id==="compare") return renderCompareErrorGame();
   if(s.id==="order") return renderOrderErrorGame();
+  if(["round10_100","round1000"].includes(s.id)) return renderRoundErrorGame(s);
   const e=s.teacher.error;
   let claim="";
   if(s.id==="place") claim="في العدد ٤٢٥، قيمة الرقم ٢ هي ٢.";
@@ -1765,7 +1787,7 @@ $("#newMascotMessage")?.addEventListener("click", ()=> {
 });
 
 
-/* V1.8: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
+/* V1.9: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
 async function clearLegacyAppCache(){
   try{
     if("serviceWorker" in navigator){
@@ -1776,10 +1798,10 @@ async function clearLegacyAppCache(){
       const keys = await caches.keys();
       await Promise.all(keys.map(k=>caches.delete(k)));
     }
-    const flagKey="cityNumbersCacheReset_180";
+    const flagKey="cityNumbersCacheReset_190";
     if(!sessionStorage.getItem(flagKey)){
       sessionStorage.setItem(flagKey,"1");
-      console.log("City Numbers V1.8 cache cleaned.");
+      console.log("City Numbers V1.9 cache cleaned.");
     }
   }catch(e){
     console.warn("Cache cleanup skipped", e);
