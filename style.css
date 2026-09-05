@@ -1966,3 +1966,14 @@ footer:before{
   .pattern-option-grid{grid-template-columns:1fr}
   .pattern-train-row,.pattern-error-row{flex-wrap:wrap}
 }
+
+
+/* ===== V1.6.1 | إصلاح اتجاه قطار الأنماط ===== */
+.pattern-train-row,
+.pattern-error-row,
+.train-diff-row{
+  direction:ltr !important;
+}
+.pattern-train-row{
+  justify-content:flex-start !important;
+}

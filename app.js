@@ -925,8 +925,8 @@ function renderPatternQuiz(qz,q){
     <div class="${sceneClass}">
       <div class="train-rails"></div>
       <div class="pattern-train-row">
-        <div class="train-wagon-v16 question" id="patternQuestionWagon">؟</div>
         ${q.seq.map(n=>`<div class="train-wagon-v16">${formatN(n)}</div>`).join("")}
+        <div class="train-wagon-v16 question" id="patternQuestionWagon">؟</div>
         <div class="${engineClass}">🚂</div>
       </div>
     </div>
@@ -1261,7 +1261,7 @@ $("#newMascotMessage")?.addEventListener("click", ()=> {
 });
 
 
-/* V1.6: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
+/* V1.6.1: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
 async function clearLegacyAppCache(){
   try{
     if("serviceWorker" in navigator){
@@ -1272,10 +1272,10 @@ async function clearLegacyAppCache(){
       const keys = await caches.keys();
       await Promise.all(keys.map(k=>caches.delete(k)));
     }
-    const flagKey="cityNumbersCacheReset_160";
+    const flagKey="cityNumbersCacheReset_161";
     if(!sessionStorage.getItem(flagKey)){
       sessionStorage.setItem(flagKey,"1");
-      console.log("City Numbers V1.6 cache cleaned.");
+      console.log("City Numbers V1.6.1 cache cleaned.");
     }
   }catch(e){
     console.warn("Cache cleanup skipped", e);
