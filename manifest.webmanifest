@@ -1,0 +1,10 @@
+{
+  "name": "مدينة الأعداد | رحلة الإتقان",
+  "short_name": "مدينة الأعداد",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#08111f",
+  "theme_color": "#101728",
+  "lang": "ar",
+  "dir": "rtl"
+}

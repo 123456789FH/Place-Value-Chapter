@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#101728" />
+  <meta name="description" content="مدينة الأعداد | رحلة الإتقان - مراجعة تفاعلية للفصل الأول: القيمة المنزلية، الصف الثالث الابتدائي." />
+  <title>مدينة الأعداد | رحلة الإتقان</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-btn hidden" id="backBtn" aria-label="رجوع">↩</button>
+      <div class="brand" role="button" tabindex="0" id="homeBrand">
+        <span class="brand-mark">١٠</span>
+        <div>
+          <strong>مدينة الأعداد</strong>
+          <small>رحلة الإتقان</small>
+        </div>
+      </div>
+      <button class="icon-btn" id="soundlessInfo" aria-label="معلومات">ⓘ</button>
+    </header>
+
+    <main>
+      <!-- الرئيسية -->
+      <section class="screen active" id="homeScreen">
+        <div class="hero">
+          <div class="city-scene" aria-hidden="true">
+            <div class="moon">✦</div>
+            <div class="building b1"><span>٣</span></div>
+            <div class="building b2"><span>١٠</span></div>
+            <div class="building b3"><span>١٠٠</span></div>
+            <div class="building b4"><span>١٠٠٠</span></div>
+            <div class="building b5"><span>١٠٠٠٠</span></div>
+            <div class="road"><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="hero-copy glass">
+            <span class="eyebrow">رياضيات • الصف الثالث الابتدائي</span>
+            <h1>مدينة الأعداد <em>رحلة الإتقان</em></h1>
+            <p>اكتشف • ابنِ • قارن • رتّب • قرّب • أتقن</p>
+            <div class="portal-actions">
+              <button class="portal student" data-go="studentScreen">
+                <span class="portal-icon">🎒</span>
+                <span><b>بوابة الطالب</b><small>أفهم • أجرّب • أتدرّب • أتحدّى</small></span>
+              </button>
+              <button class="portal teacher" data-go="teacherScreen">
+                <span class="portal-icon">🧑‍🏫</span>
+                <span><b>بوابة المعلم</b><small>اشرح • طبّق • تحدَّ • قوِّم</small></span>
+              </button>
+            </div>
+            <div class="quick-actions">
+              <button data-go="studentScreen" data-focus-map="1">🗺️ خريطة المهارات</button>
+              <button data-go="challengeScreen">🏆 تحدي الفصل</button>
+              <button data-go="clinicScreen">🩺 عيادة الأخطاء</button>
+            </div>
+          </div>
+        </div>
+        <div class="home-note">
+          <b>الفصل الأول: القيمة المنزلية</b>
+          <span>مراجعة تفاعلية متدرجة تبني الفهم قبل الاختبار.</span>
+        </div>
+      </section>
+
+      <!-- بوابة الطالب -->
+      <section class="screen" id="studentScreen">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">🎒 بوابة الطالب</span>
+            <h2>أهلًا بك في مدينة الأعداد</h2>
+            <p>اختر طريقك، ثم ابدأ من المهارة التي تحتاجها.</p>
+          </div>
+          <div class="mastery-ring" id="overallRing"><b>٠٪</b><small>إتقان عام</small></div>
+        </div>
+
+        <div class="mode-grid">
+          <button class="mode-card" data-mode="learn">
+            <span>🌱</span><b>أريد أن أفهم</b><small>شرح بصري وتجربة قصيرة</small>
+          </button>
+          <button class="mode-card" data-mode="practice">
+            <span>🎯</span><b>أريد أن أتدرّب</b><small>تدريب متدرج مع مساعدة</small>
+          </button>
+          <button class="mode-card" data-mode="challenge">
+            <span>🏆</span><b>أتحدّى نفسي</b><small>أسئلة متنوعة لقياس الإتقان</small>
+          </button>
+        </div>
+
+        <div class="subhead" id="skillsMap">
+          <div><span>🗺️</span><b>خريطة رحلتي</b></div>
+          <small>كل محطة تمثل مهارة أساسية في الفصل.</small>
+        </div>
+        <div class="skill-map" id="skillMap"></div>
+      </section>
+
+      <!-- شاشة المهارة -->
+      <section class="screen" id="skillScreen">
+        <div class="skill-hero">
+          <div>
+            <span class="eyebrow" id="skillKicker">المحطة</span>
+            <h2 id="skillTitle">المهارة</h2>
+            <p id="skillSubtitle"></p>
+          </div>
+          <div class="skill-badge" id="skillBadge">١</div>
+        </div>
+
+        <div class="tabs" id="skillTabs">
+          <button class="active" data-tab="learn">💡 أفهمها</button>
+          <button data-tab="try">🧪 أجرّبها</button>
+          <button data-tab="practice">🎯 أتدرّب</button>
+          <button data-tab="error">🩺 أصلح الخطأ</button>
+          <button data-tab="challenge">🏆 أتحدّى</button>
+          <button data-tab="mastery">📊 إتقاني</button>
+        </div>
+        <div class="tab-panel" id="skillPanel"></div>
+      </section>
+
+      <!-- بوابة المعلم -->
+      <section class="screen" id="teacherScreen">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">🧑‍🏫 بوابة المعلم</span>
+            <h2>مركز المعلم</h2>
+            <p>اختر المهارة، ثم استخدم أداة التدريس المناسبة مباشرة.</p>
+          </div>
+          <button class="present-btn" id="presentBtn">⛶ وضع العرض</button>
+        </div>
+
+        <div class="teacher-selector glass">
+          <label for="teacherSkill">اختر المهارة التي تريد تقديمها</label>
+          <select id="teacherSkill"></select>
+          <div class="teacher-objective" id="teacherObjective"></div>
+        </div>
+
+        <div class="teacher-tools" id="teacherTools"></div>
+      </section>
+
+      <!-- تحدي الفصل -->
+      <section class="screen" id="challengeScreen">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">🏆 تحدي الفصل</span>
+            <h2>برج الإتقان الذهبي</h2>
+            <p>١٠ مهام متنوعة من مهارات الفصل. أتممها لتضيء المدينة.</p>
+          </div>
+          <div class="challenge-score" id="challengeScore">٠ / ١٠</div>
+        </div>
+        <div class="challenge-box glass" id="challengeBox"></div>
+      </section>
+
+      <!-- عيادة الأخطاء -->
+      <section class="screen" id="clinicScreen">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">🩺 عيادة الأخطاء</span>
+            <h2>اكتشف الخطأ وأصلحه</h2>
+            <p>التعلم الحقيقي يبدأ حين نفهم سبب الخطأ، لا حين نعرف الإجابة فقط.</p>
+          </div>
+        </div>
+        <div class="clinic-grid" id="clinicGrid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <span>أ/ فاطمة هزازي</span>
+      <span>ملتقى التعليم التفاعلي</span>
+      <span>ملتقى معلمي ومعلمات الرياضيات</span>
+    </footer>
+  </div>
+
+  <!-- نافذة المعلم -->
+  <dialog id="teacherDialog">
+    <div class="dialog-head">
+      <div>
+        <span class="eyebrow" id="dialogKicker">أداة المعلم</span>
+        <h3 id="dialogTitle"></h3>
+      </div>
+      <button class="icon-btn" id="closeDialog">✕</button>
+    </div>
+    <div id="dialogBody"></div>
+  </dialog>
+
+  <!-- تنبيه خفيف -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
