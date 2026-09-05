@@ -441,6 +441,49 @@ function bindPanel(){
     fix.innerHTML=`القاعدة الصحيحة: <b>أزيد ${formatN(g.step)}</b> في كل مرة.<br>العربة الخاطئة كانت <b>${formatN(g.shown[g.wrongIndex])}</b>، والصحيح هو <b>${formatN(g.correct[g.wrongIndex])}</b>.`;
   };
   if($("#newPatternError")) $("#newPatternError").onclick=()=>setTab("error");
+
+  $$("[data-solve-error-pick]").forEach(b=>b.onclick=()=>{
+    const choice=b.dataset.solveErrorPick, g=state.solveError;
+    if(!g) return;
+    $$("[data-solve-error-pick]").forEach(x=>x.classList.remove("picked"));
+    b.classList.add("picked");
+    const fb=$("#solveErrorFeedback");
+    if(choice===g.answer){
+      b.classList.add("correct-choice");
+      fb.innerHTML=`<strong>أحسنت 🌟</strong> الإجابة الصحيحة هي <b>${g.answer}</b>.`;
+    }else{
+      fb.innerHTML=`ليست هذه الخطوة. فكّر في الترتيب الصحيح لخطوات حل المسألة.`;
+    }
+  });
+  if($("#revealSolveFix")) $("#revealSolveFix").onclick=()=>{
+    const g=state.solveError;
+    if(!g) return;
+    const fix=$("#solveErrorFix");
+    fix.hidden=false;
+    fix.innerHTML=`التصحيح: <b>${g.explain}</b><br>الترتيب الصحيح دائمًا: أفهم ← أخطط ← أحل ← أتحقق.`;
+  };
+  if($("#newSolveError")) $("#newSolveError").onclick=()=>setTab("error");
+
+  $$("[data-place-error-pick]").forEach(b=>b.onclick=()=>{
+    const val=+b.dataset.placeErrorPick, g=state.placeError;
+    if(!g) return;
+    const fb=$("#placeErrorFeedback");
+    if(val===+g.correct){
+      b.classList.add("correct");
+      fb.innerHTML=`<strong>أحسنت 🌟</strong> القيمة الصحيحة هي <b>${formatN(g.correct)}</b>.`;
+    }else{
+      b.classList.add("wrong");
+      fb.innerHTML=`جرّب مرة أخرى. راقب منزلة الرقم ثم اضربه في قيمة تلك المنزلة.`;
+    }
+  });
+  if($("#revealPlaceFix")) $("#revealPlaceFix").onclick=()=>{
+    const g=state.placeError;
+    if(!g) return;
+    const fix=$("#placeErrorFix");
+    fix.hidden=false;
+    fix.innerHTML=`الرقم <b>${arNum(g.digit)}</b> في منزلة <b>${g.placeName}</b>، لذلك قيمته <b>${formatN(g.correct)}</b>، وليس <b>${formatN(g.wrong)}</b>.`;
+  };
+  if($("#newPlaceError")) $("#newPlaceError").onclick=()=>setTab("error");
 }
 
 function renderTry(s){
@@ -870,17 +913,26 @@ function makeQuestion(skill, hard=false){
   if(id==="solve"){
     const opts=["أفهم","أخطط","أحل","أتحقق"];
     const q=pick([
-      {p:"ما الخطوة الأولى عند حل المسألة؟",a:"أفهم",h:"ابدأ بتحديد المعطيات والمطلوب.",e:"نبدأ بفهم المسألة قبل اختيار الخطة."},
-      {p:"بعد تنفيذ الحل، ما الخطوة التي تساعدني على التأكد من معقولية الإجابة؟",a:"أتحقق",h:"اسأل: هل إجابتي منطقية؟",e:"التحقق هو الخطوة الأخيرة."},
-      {p:"في أي خطوة أختار العملية أو الاستراتيجية المناسبة؟",a:"أخطط",h:"هذه الخطوة تأتي بعد الفهم وقبل التنفيذ.",e:"أختار الخطة المناسبة في مرحلة أخطط."}
+      {title:"ملف المحقق: سلال الحلوى", clue:"قرأ الطالب المسألة وحدد الأعداد المطلوبة قبل أن يختار العملية.", p:"في أي خطوة يوجد الطالب الآن؟", a:"أفهم", h:"هذه الخطوة تعني تحديد المعطيات والمطلوب.", e:"عندما أحدد المعطيات والمطلوب فأنا في خطوة أفهم."},
+      {title:"ملف المحقق: أقلام الصف", clue:"بعد أن عرف الطالب المطلوب، بدأ يفكر: هل أجمع أم أطرح؟", p:"ما الخطوة المناسبة هنا؟", a:"أخطط", h:"هذه الخطوة تأتي بعد الفهم وقبل تنفيذ العملية.", e:"اختيار العملية أو الاستراتيجية المناسبة يكون في خطوة أخطط."},
+      {title:"ملف المحقق: كرات الملعب", clue:"اختار الطالب العملية وبدأ ينفذ الحساب.", p:"ما الخطوة التي ينفذها الآن؟", a:"أحل", h:"في هذه الخطوة أطبق الخطة وأحسب.", e:"تنفيذ العملية الفعلية هو خطوة أحل."},
+      {title:"ملف المحقق: صناديق الكتب", clue:"انتهى الطالب من الحساب وسأل نفسه: هل الإجابة منطقية؟", p:"في أي خطوة هو الآن؟", a:"أتحقق", h:"هذه الخطوة تأتي في النهاية لأتأكد من معقولية الإجابة.", e:"فحص الحل ومعقوليته هو خطوة أتحقق."}
     ]);
-    return {prompt:q.p,options:opts,answer:q.a,hint:q.h,explain:q.e};
+    return {prompt:q.p,options:opts,answer:q.a,hint:q.h,explain:q.e,title:q.title,clue:q.clue};
   }
   if(["place","thousands","tenThousands"].includes(id)){
     const len=id==="tenThousands"?5:id==="thousands"?4:3, min=10**(len-1), n=rand(min,10**len-1), pos=rand(0,len-1), digit=+String(n)[pos], power=len-1-pos, ans=digit*(10**power);
-    const vals=shuffle([...new Set([ans,digit, digit*10, digit*100, digit*1000, digit*10000])]).slice(0,4);
-    if(!vals.includes(ans)){vals[0]=ans}
-    return {prompt:`ما قيمة الرقم ${arNum(digit)} في العدد ${formatN(n)}؟`,options:shuffle(vals),answer:ans,hint:"حدد منزلة الرقم أولًا، ثم اكتب قيمته.",explain:`منزلة الرقم تحدد قيمته داخل العدد.`};
+    const vals=shuffle([...new Set([ans,digit, digit*10, digit*100, digit*1000, digit*10000].filter(v=>v<10**(len+1)))]);
+    while(vals.length<4) vals.push(ans + rand(1,3)*(10**Math.max(0,power-1)));
+    const placeLabels=placeNamesFor(len);
+    return {
+      prompt:`ما قيمة الرقم ${arNum(digit)} في العدد ${formatN(n)}؟`,
+      options:shuffle([...new Set(vals)]).slice(0,4),
+      answer:ans,
+      hint:"حدد منزلة الرقم أولًا، ثم اضربه في قيمة المنزلة.",
+      explain:`الرقم ${arNum(digit)} في منزلة ${placeLabels[power]}، لذلك قيمته ${formatN(ans)}.`,
+      number:n,digit,power,len,placeName:placeLabels[power], placeLabels
+    };
   }
   if(id==="compare"){
     const a=rand(1100,9999), b=hard?rand(1100,9999):(Math.random()<.15?a:rand(1100,9999)), ans=a===b?"=":a>b?">":"<";
@@ -1008,6 +1060,201 @@ function renderPatternErrorGame(){
   </article>`;
 }
 
+
+function solveStepCaption(step){
+  return ({'أفهم':'أحدد المعطيات','أخطط':'أختار الخطة','أحل':'أنفذ العملية','أتحقق':'أراجع الحل'})[step] || '';
+}
+function renderSolveQuiz(qz,q){
+  $("#skillPanel").innerHTML=`<article class="solve-game-card">
+    <div class="solve-head">
+      <div>
+        <span class="eyebrow">🕵️ ${qz.type==="challenge"?"تحدّي المحقق الرياضي":"تدريب المحقق الرياضي"}</span>
+        <h3>${qz.type==="challenge"?"القضية الذهبية":"مكتب المحقق الرياضي"}</h3>
+        <p>${qz.type==="challenge"?"اختر الخطوة الصحيحة بسرعة، ثم اجمع نجوم المحقق الصغير.":"اقرأ التلميح داخل ملف القضية، ثم اختر الخطوة المناسبة من خطوات حل المسألة."}</p>
+      </div>
+      <div class="solve-meta">
+        <span>${qz.type==="challenge"?"🏆 تحدّي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span>
+        <span>⭐ النقاط: ${arNum(qz.score)}</span>
+      </div>
+    </div>
+
+    <div class="detective-scene">
+      <div class="detective-board">
+        <div class="case-paper">
+          <h4>${q.title || "ملف القضية"}</h4>
+          <div class="case-prompt">${q.prompt}</div>
+          <div class="detective-note">${q.clue}</div>
+        </div>
+        <div class="tower-note">
+          <b>خطوات المحقق:</b>
+          <div class="detective-step-preview">
+            ${q.options.map(step=>`<span>${step}</span>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-option-grid" id="quizOptions">
+      ${q.options.map(step=>`<button class="step-option" data-answer="${step}"><span>${step}</span><small>${solveStepCaption(step)}</small></button>`).join("")}
+    </div>
+    <div class="cta-row"><button class="btn secondary" id="hintBtn">💡 ساعدني</button><button class="btn hidden" id="nextQ">التالي</button></div>
+    <div id="quizHint" class="hint-box" hidden></div>
+    <div id="quizFeedback" class="solve-feedback" hidden></div>
+  </article>`;
+  $$("#quizOptions .step-option").forEach(b=>b.onclick=()=>answerSolveQuiz(b,q));
+  $("#hintBtn").onclick=()=>{const h=$("#quizHint");h.hidden=false;h.textContent=q.hint;};
+  $("#nextQ").onclick=()=>{state.quiz.index++;state.quiz.answered=false;renderQuiz();};
+}
+function answerSolveQuiz(btn,q){
+  if(state.quiz.answered)return;
+  state.quiz.answered=true;
+  const ok = btn.dataset.answer===q.answer;
+  if(ok) state.quiz.score++;
+  btn.classList.add(ok?"correct":"wrong");
+  $$("#quizOptions .step-option").forEach(b=>{ if(b.dataset.answer===q.answer) b.classList.add("correct"); });
+  const f=$("#quizFeedback");
+  f.hidden=false;
+  f.innerHTML = ok
+    ? `<strong>أحسنت أيها المحقق 🌟</strong><br>${q.explain}`
+    : `<strong>راجع الملف مرة أخرى</strong><br>${q.explain}`;
+  $("#nextQ").classList.remove("hidden");
+}
+function renderPlaceQuiz(qz,q){
+  const labels=[...q.placeLabels].reverse();
+  $("#skillPanel").innerHTML=`<article class="place-game-card">
+    <div class="place-head">
+      <div>
+        <span class="eyebrow">🏗️ ${qz.type==="challenge"?"تحدّي برج القيمة":"تدريب برج القيمة"}</span>
+        <h3>${qz.type==="challenge"?"البرج الذهبي":"برج القيمة المنزلية"}</h3>
+        <p>${qz.type==="challenge"?"حدّد القيمة الصحيحة بسرعة، واجمع نجوم البناء والإتقان.":"انظر إلى العدد داخل البرج، وحدد قيمة الرقم المطلوبة من بين النوافذ."}</p>
+      </div>
+      <div class="place-meta">
+        <span>${qz.type==="challenge"?"🏆 تحدّي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span>
+        <span>⭐ النقاط: ${arNum(qz.score)}</span>
+      </div>
+    </div>
+
+    <div class="tower-quiz-scene">
+      <div class="tower-layout">
+        <div class="tower-building">
+          ${labels.map((label,idx)=>{
+            const originalPower=q.len-1-idx;
+            return `<div class="tower-level">
+              <div class="tower-label">${label}</div>
+              <div class="tower-core"></div>
+              <div class="tower-window">${arNum(String(q.number)[idx])}</div>
+            </div>`;
+          }).join("")}
+        </div>
+        <div class="tower-number-badge">
+          <h4>${qz.type==="challenge"?"🎯 مهمة البرج":"📌 بطاقة العدد"}</h4>
+          <div class="tower-big-number">${formatN(q.number)}</div>
+          <div class="detective-note">ابحث عن الرقم <b>${arNum(q.digit)}</b> داخل العدد، ثم حدّد قيمته المنزلية الصحيحة.</div>
+          <div class="case-prompt" style="font-size:28px;margin-top:12px">${q.prompt}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="place-option-grid" id="quizOptions">
+      ${q.options.map(v=>`<button class="option place-option" data-answer="${v}">${formatN(v)}</button>`).join("")}
+    </div>
+    <div class="cta-row"><button class="btn secondary" id="hintBtn">💡 ساعدني</button><button class="btn hidden" id="nextQ">التالي</button></div>
+    <div id="quizHint" class="hint-box" hidden></div>
+    <div id="quizFeedback" class="place-feedback" hidden></div>
+  </article>`;
+  $$("#quizOptions .place-option").forEach(b=>b.onclick=()=>answerPlaceQuiz(b,q));
+  $("#hintBtn").onclick=()=>{const h=$("#quizHint");h.hidden=false;h.textContent=q.hint;};
+  $("#nextQ").onclick=()=>{state.quiz.index++;state.quiz.answered=false;renderQuiz();};
+}
+function answerPlaceQuiz(btn,q){
+  if(state.quiz.answered)return;
+  state.quiz.answered=true;
+  const chosen=+btn.dataset.answer;
+  const ok = chosen===+q.answer;
+  if(ok) state.quiz.score++;
+  btn.classList.add(ok?"correct":"wrong");
+  $$("#quizOptions .place-option").forEach(b=>{ if(+b.dataset.answer===+q.answer) b.classList.add("correct"); });
+  const f=$("#quizFeedback");
+  f.hidden=false;
+  f.innerHTML = ok
+    ? `<strong>أحسنت 🌟</strong> بنيت القيمة الصحيحة لهذا الرقم.<br>${q.explain}`
+    : `<strong>حاول من جديد</strong><br>${q.explain}`;
+  $("#nextQ").classList.remove("hidden");
+}
+function makeSolveErrorCase(){
+  return pick([
+    {title:"قضية ناقصة", claim:"قرأ الطالب المسألة، ثم خطط، ثم حل، ثم توقف.", prompt:"ما الخطوة التي نسيها في النهاية؟", answer:"أتحقق", explain:"بعد تنفيذ الحل يجب أن أتحقق من معقولية الإجابة."},
+    {title:"قضية مستعجلة", claim:"بدأ الطالب بالحل مباشرة قبل أن يفهم المطلوب.", prompt:"ما الخطوة التي كان يجب أن يبدأ بها؟", answer:"أفهم", explain:"أبدأ دائمًا بفهم المعطيات والمطلوب قبل اختيار الخطة أو الحل."},
+    {title:"قضية الخطة المفقودة", claim:"فهم الطالب المسألة، ثم انتقل مباشرة إلى الحساب.", prompt:"أي خطوة قفز فوقها؟", answer:"أخطط", explain:"بعد الفهم أختار الخطة أو العملية المناسبة، ثم أنتقل إلى الحل."}
+  ]);
+}
+function renderSolveErrorGame(){
+  state.solveError = makeSolveErrorCase();
+  const g=state.solveError;
+  const opts=["أفهم","أخطط","أحل","أتحقق"];
+  return `<article class="solve-error-card">
+    <span class="eyebrow">🩺 عيادة المحقق الرياضي</span>
+    <h3>${g.title}</h3>
+    <p>اقرأ سلوك الطالب، ثم حدّد الخطوة التي أخطأ فيها أو نسيها.</p>
+    <div class="detective-note"><b>${g.claim}</b><br>${g.prompt}</div>
+    <div class="detective-fix-grid">
+      ${opts.map(step=>`<button class="fault-step" data-solve-error-pick="${step}"><span>${step}</span><small>${solveStepCaption(step)}</small></button>`).join("")}
+    </div>
+    <div class="solve-fix-box" id="solveErrorFeedback">💡 فكّر في الترتيب الصحيح: أفهم ← أخطط ← أحل ← أتحقق.</div>
+    <div class="cta-row">
+      <button class="btn secondary" id="revealSolveFix">أظهر التصحيح</button>
+      <button class="btn" id="newSolveError">جولة جديدة</button>
+    </div>
+    <div class="solve-fix-box" id="solveErrorFix" hidden></div>
+  </article>`;
+}
+function makePlaceErrorCase(len=3){
+  const n=makePlaceLabNumber(len);
+  const digits=String(n).split("").map(Number);
+  const pos=rand(0,len-1);
+  const digit=digits[pos];
+  const power=len-1-pos;
+  const labels=placeNamesFor(len);
+  const correct=digit*(10**power);
+  const wrong= digit;
+  const options=shuffle([...new Set([correct, wrong, digit*(10**Math.max(0,power-1)), digit*(10**Math.min(len-1,power+1))])]).slice(0,4);
+  if(!options.includes(correct)) options[0]=correct;
+  return {n,digit,power,placeName:labels[power],correct,wrong,options:[...new Set(options)].slice(0,4)};
+}
+function renderPlaceErrorGame(skill){
+  const len=skill.id==="tenThousands"?5:skill.id==="thousands"?4:3;
+  state.placeError = makePlaceErrorCase(len);
+  const g=state.placeError;
+  return `<article class="place-error-card">
+    <span class="eyebrow">🩺 عيادة البرج</span>
+    <h3>أصلح بطاقة القيمة المنزلية</h3>
+    <p>قال أحد الطلاب إجابة خاطئة. اختر القيمة الصحيحة لإصلاح بطاقة البرج.</p>
+    <div class="place-error-scene">
+      <div class="place-error-columns">
+        <div class="tower-number-badge">
+          <h4>العدد</h4>
+          <div class="tower-big-number">${formatN(g.n)}</div>
+          <div class="detective-note">الرقم المطلوب: <b>${arNum(g.digit)}</b> في منزلة <b>${g.placeName}</b></div>
+        </div>
+        <div class="case-paper">
+          <h4>الإجابة الخاطئة</h4>
+          <div class="case-prompt" style="font-size:28px">قال الطالب: قيمة الرقم ${arNum(g.digit)} هي ${formatN(g.wrong)}</div>
+          <div class="tower-note">اختر القيمة الصحيحة من الخيارات لإصلاح البرج.</div>
+        </div>
+      </div>
+    </div>
+    <div class="value-choice-grid">
+      ${g.options.map(v=>`<button class="option value-choice" data-place-error-pick="${v}">${formatN(v)}</button>`).join("")}
+    </div>
+    <div class="place-fix-box" id="placeErrorFeedback">💡 تذكّر: قيمة الرقم = الرقم × قيمة المنزلة.</div>
+    <div class="cta-row">
+      <button class="btn secondary" id="revealPlaceFix">أظهر التصحيح</button>
+      <button class="btn" id="newPlaceError">جولة جديدة</button>
+    </div>
+    <div class="place-fix-box" id="placeErrorFix" hidden></div>
+  </article>`;
+}
+
 function normalizeAnswer(v){return typeof v==="number"?String(v):String(v);}
 function startQuiz(type="practice"){
   const count=type==="challenge"?7:5;
@@ -1018,6 +1265,8 @@ function renderQuiz(){
   const qz=state.quiz,q=qz.questions[qz.index];
   if(qz.index>=qz.count){finishQuiz();return}
   if(state.skill.id==="patterns"){ renderPatternQuiz(qz,q); return; }
+  if(state.skill.id==="solve"){ renderSolveQuiz(qz,q); return; }
+  if(["place","thousands","tenThousands"].includes(state.skill.id)){ renderPlaceQuiz(qz,q); return; }
   $("#skillPanel").innerHTML=`<article class="practice-card">
     <div class="quiz-meta"><span>${qz.type==="challenge"?"🏆 تحدي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span><span>النقاط: ${arNum(qz.score)}</span></div>
     <div class="question">${q.prompt}</div>
@@ -1031,6 +1280,8 @@ function renderQuiz(){
 }
 function answerQuiz(btn,q){
   if(state.skill.id==="patterns"){ answerPatternQuiz(btn,q); return; }
+  if(state.skill.id==="solve"){ answerSolveQuiz(btn,q); return; }
+  if(["place","thousands","tenThousands"].includes(state.skill.id)){ answerPlaceQuiz(btn,q); return; }
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const raw=btn.dataset.answer, right=normalizeAnswer(q.answer), isNum=typeof q.answer==="number", ok=isNum?+raw===+q.answer:raw===right;
@@ -1058,6 +1309,8 @@ function finishQuiz(){
 }
 function renderError(s){
   if(s.id==="patterns") return renderPatternErrorGame();
+  if(s.id==="solve") return renderSolveErrorGame();
+  if(["place","thousands","tenThousands"].includes(s.id)) return renderPlaceErrorGame(s);
   const e=s.teacher.error;
   let claim="";
   if(s.id==="place") claim="في العدد ٤٢٥، قيمة الرقم ٢ هي ٢.";
@@ -1261,7 +1514,7 @@ $("#newMascotMessage")?.addEventListener("click", ()=> {
 });
 
 
-/* V1.6.1: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
+/* V1.7: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
 async function clearLegacyAppCache(){
   try{
     if("serviceWorker" in navigator){
@@ -1272,10 +1525,10 @@ async function clearLegacyAppCache(){
       const keys = await caches.keys();
       await Promise.all(keys.map(k=>caches.delete(k)));
     }
-    const flagKey="cityNumbersCacheReset_161";
+    const flagKey="cityNumbersCacheReset_170";
     if(!sessionStorage.getItem(flagKey)){
       sessionStorage.setItem(flagKey,"1");
-      console.log("City Numbers V1.6.1 cache cleaned.");
+      console.log("City Numbers V1.7 cache cleaned.");
     }
   }catch(e){
     console.warn("Cache cleanup skipped", e);
