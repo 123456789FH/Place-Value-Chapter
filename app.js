@@ -187,6 +187,20 @@ const homeGameTags = {
   round1000:["ألف","فسّر"]
 };
 
+const featuredSkillIds = ["patterns","place","compare"];
+const skillShortDesc = {
+  patterns: "أكمل عربات القطار بعد اكتشاف القاعدة العددية.",
+  place: "ابنِ العدد داخل البرج وحدد قيمة كل رقم.",
+  compare: "ضع رمز المقارنة الصحيح على جسر الأعداد.",
+  solve: "نظم خطوات الحل مثل محقق صغير.",
+  thousands: "اكتب وحلل الأعداد ضمن الألوف.",
+  tenThousands: "كوّن أعدادًا أكبر واقرأها بثقة.",
+  order: "رتّب الأعداد على المضمار من الأصغر أو الأكبر.",
+  round10_100: "قرّب العدد باستخدام خط الأعداد.",
+  round1000: "اختر الألف الأقرب للوصول إلى البرج."
+};
+
+
 
 const $ = s=>document.querySelector(s);
 const $$ = s=>[...document.querySelectorAll(s)];
@@ -200,8 +214,9 @@ function go(id){
   $$(".screen").forEach(s=>s.classList.toggle("active",s.id===id));
   $("#backBtn").classList.toggle("hidden",id==="homeScreen");
   window.scrollTo({top:0,behavior:"smooth"});
-  if(id==="homeScreen") renderHomeGames();
-  if(id==="studentScreen") renderHomeGames();
+  if(id==="homeScreen"){ renderFeaturedGames(); renderHomeGames(); }
+  if(id==="studentScreen") renderFeaturedGames();
+renderHomeGames();
 renderStudent();
   if(id==="teacherScreen") renderTeacher();
   if(id==="clinicScreen") renderClinic();
@@ -221,6 +236,33 @@ $$("[data-go]").forEach(b=>b.onclick=()=>{
 function overall(){
   const vals=skills.map(s=>mastery[s.id]||0);
   return Math.round(vals.reduce((a,b)=>a+b,0)/skills.length);
+}
+
+
+function renderFeaturedGames(){
+  const box=$("#homeFeatureBoard");
+  if(!box) return;
+  const accentMap={
+    patterns:"rgba(255,210,100,.55)",
+    place:"rgba(139,231,183,.55)",
+    compare:"rgba(145,228,255,.55)"
+  };
+  box.innerHTML = featuredSkillIds.map((id,idx)=>{
+    const s=skills.find(x=>x.id===id);
+    const m=mastery[s.id]||0;
+    const label = idx===0 ? "لعبة متحركة" : idx===1 ? "مختبر تفاعلي" : "تحدٍّ بصري";
+    return `<button class="feature-game" data-home-skill="${s.id}" style="--featureAccent:${accentMap[s.id]}">
+      <span class="feature-badge">${label}</span>
+      <div class="feature-icon">${s.icon}</div>
+      <h3>${s.place}</h3>
+      <p>${skillShortDesc[s.id] || s.title}</p>
+      <div class="feature-actions">
+        <small>${m?`إتقانك: ${arNum(m)}٪`:"ابدأ من هنا"}</small>
+        <span class="feature-play">العب الآن</span>
+      </div>
+    </button>`;
+  }).join("");
+  $$("[data-home-skill]").forEach(btn => btn.onclick = () => openSkill(btn.dataset.homeSkill, "learn"));
 }
 
 function renderHomeGames(){
@@ -246,6 +288,7 @@ function renderStudent(){
   $("#overallRing").style.background=`conic-gradient(var(--gold) ${deg}deg,rgba(255,255,255,.08) 0)`;
   $("#overallRing b").textContent=arNum(ov)+"٪";
   if($("#mascotLine")) $("#mascotLine").textContent = modeLines[state.mode] || modeLines.learn;
+  renderFeaturedGames();
   renderHomeGames();
   $("#skillMap").innerHTML=skills.map((s,i)=>{
     const m=mastery[s.id]||0;
@@ -304,7 +347,7 @@ function renderLearn(s){
     <h3>${s.title}</h3>
     <p>${s.subtitle}</p>
     <div class="rule-box"><b>قاعدة سهلة:</b><br>${s.rule}</div>
-    <div class="example-box"><b>مثال:</b><div class="example-big">${s.example}</div></div>
+    <div class="example-box"><b>مثال:</b><div class="example-big">${s.example}</div></div>${["place","thousands","tenThousands"].includes(s.id)?`<div class="place-hero-tip">🏗️ في هذه المحطة ستبني العدد داخل برج المنازل، ثم تكتشف قيمة كل رقم.</div>`:""}
     <div class="cta-row">
       <button class="btn mint" data-tab-jump="try">🧪 جرّبها بيدك</button>
       <button class="btn secondary" data-tab-jump="practice">🎯 ابدأ التدريب</button>
@@ -628,20 +671,41 @@ function tryPattern(){
   const ans=start+4*step;
   const opts=shuffle([ans,ans+(step>0?5:-5),ans+(step>0?10:-10)]);
   return `<article class="try-card" data-answer="${ans}">
-    <span class="eyebrow">🚂 قطار الأنماط</span><h3>ما العدد التالي؟</h3>
-    <div class="example-big">${seq.map(formatN).join(" ، ")} ، ؟</div>
-    <div class="options" id="tryPatternOpts">${opts.map(o=>`<button class="option" data-value="${o}">${formatN(o)}</button>`).join("")}</div>
-    <div class="feedback" id="tryPatternFeedback">ابحث عن الفرق بين كل عدد والذي يليه.</div>
+    <span class="eyebrow">🚂 قطار الأنماط</span><h3>أكمل عربة القطار الأخيرة</h3>
+    <div class="pattern-scene">
+      <p>اكتشف القاعدة أولًا، ثم اختر العدد الذي يجب أن تحمله العربة الأخيرة.</p>
+      <div class="pattern-track">
+        <div class="train-row">
+          <div class="engine">🚂</div>
+          ${seq.map(n=>`<div class="wagon">${formatN(n)}</div>`).join("")}
+          <div class="wagon question-wagon">؟</div>
+        </div>
+      </div>
+      <div class="pattern-options" id="tryPatternOpts">
+        ${opts.map(o=>`<button class="option" data-value="${o}">${formatN(o)}</button>`).join("")}
+      </div>
+    </div>
+    <div class="feedback" id="tryPatternFeedback">انظر إلى الفرق بين كل عربة والتي بعدها.</div>
   </article>`;
 }
 function tryCompare(){
   const a=rand(1200,9999), b=Math.random()<.2?a:rand(1200,9999);
   const ans=a===b?"=":a>b?">":"<";
   return `<article class="try-card" data-a="${a}" data-b="${b}" data-answer="${ans}">
-    <span class="eyebrow">⚖️ ميزان الأعداد</span><h3>اختر رمز المقارنة</h3>
-    <div class="example-big">${formatN(a)} <span id="symbolSlot">؟</span> ${formatN(b)}</div>
-    <div class="symbols" id="compareSymbols"><button>&gt;</button><button>&lt;</button><button>=</button></div>
-    <div class="feedback" id="compareFeedback">ابدأ من أكبر منزلة ثم انتقل حتى أول اختلاف.</div>
+    <span class="eyebrow">⚖️ جسر المقارنة</span><h3>ضع الرمز الصحيح بين العددين</h3>
+    <div class="compare-scene">
+      <p>ابدأ من أكبر منزلة، ثم انتقل حتى أول اختلاف بين العددين.</p>
+      <div class="compare-board">
+        <div class="compare-tower"><b>العدد الأول</b><strong>${formatN(a)}</strong></div>
+        <div class="compare-bridge">
+          <div class="big-symbol" id="symbolSlot">؟</div>
+          <small>رمز المقارنة</small>
+        </div>
+        <div class="compare-tower"><b>العدد الثاني</b><strong>${formatN(b)}</strong></div>
+      </div>
+      <div class="symbols" id="compareSymbols"><button>&gt;</button><button>&lt;</button><button>=</button></div>
+    </div>
+    <div class="feedback" id="compareFeedback">تذكر: إذا تساوت الأرقام في منزلة، انتقل إلى المنزلة التالية.</div>
   </article>`;
 }
 function tryOrder(){

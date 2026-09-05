@@ -26,59 +26,50 @@
 
     <main>
       
+      
       <!-- الرئيسية -->
       <section class="screen active" id="homeScreen">
-        <div class="hero playground-hero">
-          <div class="city-scene fun-city-scene" aria-hidden="true">
-            <div class="sun-smile">☀️</div>
-            <div class="cloud c1"></div>
-            <div class="cloud c2"></div>
-            <div class="cloud c3"></div>
-            <div class="balloon bl1">٣</div>
-            <div class="balloon bl2">١٠</div>
-            <div class="balloon bl3">١٠٠</div>
-            <div class="balloon bl4">١٠٠٠</div>
-            <div class="toy-city">
-              <div class="toy-house h1">🚂</div>
-              <div class="toy-house h2">🏗️</div>
-              <div class="toy-house h3">⚖️</div>
-              <div class="toy-house h4">🎯</div>
-              <div class="toy-house h5">🏰</div>
-            </div>
-            <div class="toy-road"></div>
+        <div class="hero v14-hero">
+          <div class="city-scene v14-scene" aria-hidden="true">
+            <div class="v14-sun">☀️</div>
+            <div class="v14-cloud cloud-a"></div>
+            <div class="v14-cloud cloud-b"></div>
+            <div class="v14-cloud cloud-c"></div>
+            <div class="v14-hill hill-a"></div>
+            <div class="v14-hill hill-b"></div>
+            <div class="v14-road"></div>
+            <div class="v14-mini-station st1">🚂</div>
+            <div class="v14-mini-station st2">🏗️</div>
+            <div class="v14-mini-station st3">⚖️</div>
+            <div class="v14-mini-station st4">🎯</div>
+            <div class="v14-mini-station st5">🏰</div>
+            <div class="v14-star s1">✦</div>
+            <div class="v14-star s2">✦</div>
+            <div class="v14-star s3">✦</div>
           </div>
 
-          <div class="hero-grid">
-            <div class="kids-stage glass">
-              <div class="kids-stage-badge">٩ ألعاب تعليمية</div>
-              <img class="kids-hero-image big-kids-image" src="./assets/rashid-basmah.png" alt="الشخصيتان راشد وبسمة" />
-              <div class="speech-bubble giant-bubble">
-                <b>مرحبًا! نحن راشد وبسمة 👋</b>
-                <small>سنرافقك في رحلة مليئة بالألعاب الممتعة حتى تتقن مهارات القيمة المنزلية.</small>
-              </div>
-            </div>
-
-            <div class="hero-copy glass playful-copy">
+          <div class="v14-hero-inner">
+            <div class="v14-copy glass">
               <img class="hero-logo" src="./assets/forum-logo.jpg" alt="ملتقى التعليم التفاعلي" />
               <span class="eyebrow">رياضيات • الصف الثالث الابتدائي</span>
               <h1>مدينة الأعداد <em>رحلة الإتقان</em></h1>
-              <p>كل مهارة لعبة مستقلة: اكتشف • ابنِ • قارن • رتّب • قرّب • أتقن</p>
+              <p class="v14-lead">عالم طفولي مبهج، وفيه كل مهارة لعبة مستقلة تساعد الطالب على الفهم ثم التدريب ثم الإتقان.</p>
 
-              <div class="hero-badges">
-                <span>🚂 أنماط</span>
-                <span>🏗️ منازل</span>
-                <span>⚖️ مقارنة</span>
-                <span>🎯 تقريب</span>
+              <div class="v14-mini-tags">
+                <span>🚂 قطار الأنماط</span>
+                <span>🏗️ برج القيمة</span>
+                <span>⚖️ جسر المقارنة</span>
+                <span>🎯 ساحة التقريب</span>
               </div>
 
               <div class="portal-actions">
                 <button class="portal student childlike-portal" data-go="studentScreen">
                   <span class="portal-icon">🎒</span>
-                  <span><b>بوابة الطالب</b><small>ادخل مدينة الألعاب التعليمية وابدأ رحلتك</small></span>
+                  <span><b>بوابة الطالب</b><small>ادخل الألعاب التعليمية وابدأ رحلتك</small></span>
                 </button>
                 <button class="portal teacher" data-go="teacherScreen">
                   <span class="portal-icon">🧑‍🏫</span>
-                  <span><b>بوابة المعلم</b><small>دروس سريعة • مراجعة صفية • تقويم</small></span>
+                  <span><b>بوابة المعلم</b><small>مراجعة صفية • شرح • تقويم</small></span>
                 </button>
               </div>
 
@@ -88,13 +79,33 @@
                 <button data-go="clinicScreen">🩺 عيادة الأخطاء</button>
               </div>
             </div>
+
+            <div class="v14-kids glass">
+              <div class="kids-stage-badge">٩ ألعاب تعليمية</div>
+              <img class="kids-hero-image v14-kids-image" src="./assets/rashid-basmah.png" alt="الشخصيتان راشد وبسمة" />
+              <div class="v14-kids-card">
+                <b>مرحبًا! نحن راشد وبسمة 👋</b>
+                <small>سنرافقك خطوة خطوة في رحلة ممتعة حتى تتقن مهارات القيمة المنزلية.</small>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="v14-featured glass">
+          <div class="v14-featured-head">
+            <div>
+              <span class="eyebrow">🎮 محطات مميزة</span>
+              <h2>ابدأ من الألعاب الأوضح والأمتع</h2>
+              <p>هذه المحطات الثلاث هي نموذج V1.4 المطوّر بشكل أكبر.</p>
+            </div>
+          </div>
+          <div class="v14-feature-grid" id="homeFeatureBoard"></div>
         </div>
 
         <div class="game-world glass">
           <div class="game-world-head">
             <div>
-              <span class="eyebrow">🎮 عالم المهارات</span>
+              <span class="eyebrow">🕹️ عالم المهارات</span>
               <h2>كل محطة لعبة مستقلة</h2>
               <p>اختر أي مهارة من هنا، وادخل لعبتها التعليمية مباشرة.</p>
             </div>
@@ -108,7 +119,7 @@
 
         <div class="home-note">
           <b>الفصل الأول: القيمة المنزلية</b>
-          <span>مشهد طفولي مبهج يساعد الطالب على الفهم والمراجعة بطريقة محببة.</span>
+          <span>واجهة أكثر وضوحًا للأطفال، ومحطات أقرب إلى عالم الألعاب التعليمية.</span>
         </div>
       </section>
 
