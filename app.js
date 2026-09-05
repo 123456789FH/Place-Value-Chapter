@@ -484,6 +484,48 @@ function bindPanel(){
     fix.innerHTML=`الرقم <b>${arNum(g.digit)}</b> في منزلة <b>${g.placeName}</b>، لذلك قيمته <b>${formatN(g.correct)}</b>، وليس <b>${formatN(g.wrong)}</b>.`;
   };
   if($("#newPlaceError")) $("#newPlaceError").onclick=()=>setTab("error");
+
+  $$("[data-compare-error-pick]").forEach(b=>b.onclick=()=>{
+    const g=state.compareError;
+    if(!g) return;
+    const choice=b.dataset.compareErrorPick;
+    if(choice===g.correct){
+      b.classList.add("correct");
+      $("#compareErrorFeedback").innerHTML=`<strong>أحسنت 🌟</strong> الرمز الصحيح هو <b>${g.correct}</b>.`;
+    }else{
+      b.classList.add("wrong");
+      $("#compareErrorFeedback").innerHTML=`جرّب من جديد. راقب أول منزلة يختلف عندها العددان.`;
+    }
+  });
+  if($("#revealCompareFix")) $("#revealCompareFix").onclick=()=>{
+    const g=state.compareError;
+    if(!g) return;
+    const fix=$("#compareErrorFix");
+    fix.hidden=false;
+    fix.innerHTML=`التصحيح: <b>${formatN(g.a)} ${g.correct} ${formatN(g.b)}</b><br>${g.reason}`;
+  };
+  if($("#newCompareError")) $("#newCompareError").onclick=()=>setTab("error");
+
+  $$("[data-order-error-pick]").forEach(b=>b.onclick=()=>{
+    const g=state.orderError;
+    if(!g) return;
+    const choice=b.dataset.orderErrorPick;
+    if(choice===g.correctText){
+      b.classList.add("correct");
+      $("#orderErrorFeedback").innerHTML=`<strong>أحسنت 🌟</strong> هذا هو الترتيب الصحيح.`;
+    }else{
+      b.classList.add("wrong");
+      $("#orderErrorFeedback").innerHTML=`ما زال المسار غير صحيح. قارن الأعداد منزلة منزلة.`;
+    }
+  });
+  if($("#revealOrderFix")) $("#revealOrderFix").onclick=()=>{
+    const g=state.orderError;
+    if(!g) return;
+    const fix=$("#orderErrorFix");
+    fix.hidden=false;
+    fix.innerHTML=`الترتيب الصحيح ${g.askAsc?"من الأصغر إلى الأكبر":"من الأكبر إلى الأصغر"} هو:<br><b>${g.correctText}</b>`;
+  };
+  if($("#newOrderError")) $("#newOrderError").onclick=()=>setTab("error");
 }
 
 function renderTry(s){
@@ -936,14 +978,36 @@ function makeQuestion(skill, hard=false){
   }
   if(id==="compare"){
     const a=rand(1100,9999), b=hard?rand(1100,9999):(Math.random()<.15?a:rand(1100,9999)), ans=a===b?"=":a>b?">":"<";
-    return {prompt:`اختر الرمز الصحيح: ${formatN(a)} __ ${formatN(b)}`,options:[">","<","="],answer:ans,hint:"ابدأ من أكبر منزلة وانتقل حتى أول اختلاف.",explain:`الرمز الصحيح هو ${ans}.`};
+    const sa=String(a), sb=String(b), labels=["الألوف","المئات","العشرات","الآحاد"];
+    let diffIndex=sa.split("").findIndex((d,i)=>d!==sb[i]);
+    let why = ans==="=" ? "العددان متساويان في جميع المنازل." : `أول اختلاف يظهر في منزلة ${labels[Math.max(0,diffIndex)]}.`;
+    return {
+      prompt:`اختر الرمز الصحيح بين العددين`,
+      options:[">","<","="],
+      answer:ans,
+      hint:"ابدأ من أكبر منزلة وانتقل حتى أول اختلاف.",
+      explain:`الرمز الصحيح هو ${ans}. ${why}`,
+      a,b,why
+    };
   }
   if(id==="order"){
-    const nums=shuffle([rand(1100,2800),rand(2801,4700),rand(4701,6800),rand(6801,9400)]), asc=[...nums].sort((a,b)=>a-b), desc=[...asc].reverse(), askAsc=Math.random()<.5, ans=(askAsc?asc:desc).join("-");
-    const opt1=shuffle(nums).join("-"), opt2=[...asc].reverse().join("-"), opt3=[...asc].sort(()=>Math.random()-.5).join("-");
+    const nums=shuffle([rand(1100,2800),rand(2801,4700),rand(4701,6800),rand(6801,9400)]);
+    const asc=[...nums].sort((a,b)=>a-b), desc=[...asc].reverse(), askAsc=Math.random()<.5;
+    const correctArr=askAsc?asc:desc;
+    const ans=correctArr.join("-");
+    const opt1=shuffle(nums).join("-");
+    const opt2=(askAsc?desc:asc).join("-");
+    const opt3=[...correctArr].sort(()=>Math.random()-.5).join("-");
     const options=[ans,opt1,opt2,opt3].filter((v,i,a)=>a.indexOf(v)===i);
     while(options.length<4) options.push(shuffle(nums).join("-"));
-    return {prompt:`اختر الترتيب ${askAsc?"من الأصغر إلى الأكبر":"من الأكبر إلى الأصغر"}:`,options:shuffle(options).map(x=>x.split("-").map(n=>formatN(+n)).join(" ، ")),answer:ans.split("-").map(n=>formatN(+n)).join(" ، "),hint:"قارن أكبر منزلة أولًا.",explain:"حوّل الترتيب إلى سلسلة من المقارنات القصيرة."};
+    return {
+      prompt:`اختر الترتيب ${askAsc?"من الأصغر إلى الأكبر":"من الأكبر إلى الأصغر"}`,
+      options:shuffle(options).map(x=>x.split("-").map(n=>formatN(+n)).join(" ، ")),
+      answer:ans.split("-").map(n=>formatN(+n)).join(" ، "),
+      hint:"قارن أكبر منزلة أولًا، ثم انتقل إلى المنزلة التالية عند التساوي.",
+      explain:`الترتيب الصحيح هو: ${ans.split("-").map(n=>formatN(+n)).join(" ، ")}.`,
+      nums, askAsc, correctArr
+    };
   }
   if(id==="round10_100"){
     const to=pick([10,100]), n=rand(120,980), ans=Math.round(n/to)*to;
@@ -1255,6 +1319,187 @@ function renderPlaceErrorGame(skill){
   </article>`;
 }
 
+
+function compareReason(a,b){
+  const sa=String(a), sb=String(b), labels=["الألوف","المئات","العشرات","الآحاد"];
+  if(a===b) return "العددان متساويان في جميع المنازل.";
+  const idx=sa.split("").findIndex((d,i)=>d!==sb[i]);
+  return `أول اختلاف كان في منزلة ${labels[Math.max(0,idx)]}.`;
+}
+function renderCompareQuiz(qz,q){
+  $("#skillPanel").innerHTML=`<article class="compare-game-card">
+    <div class="compare-head">
+      <div>
+        <span class="eyebrow">⚖️ ${qz.type==="challenge"?"تحدّي جسر المقارنة":"تدريب جسر المقارنة"}</span>
+        <h3>${qz.type==="challenge"?"جسر المقارنة الذهبي":"جسر المقارنة"}</h3>
+        <p>${qz.type==="challenge"?"اعبر الجسر باختيار الرمز الصحيح بسرعة ودقة.":"ابدأ من أكبر منزلة، ثم اختر الرمز الذي يربط العددين بصورة صحيحة."}</p>
+      </div>
+      <div class="compare-meta">
+        <span>${qz.type==="challenge"?"🏆 تحدّي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span>
+        <span>⭐ النقاط: ${arNum(qz.score)}</span>
+      </div>
+    </div>
+
+    <div class="compare-scene-box">
+      <div class="compare-board">
+        <div class="compare-tower"><b>العدد الأول</b><strong>${formatN(q.a)}</strong></div>
+        <div class="compare-bridge">
+          <div class="big-symbol">؟</div>
+          <small>اختر الرمز</small>
+        </div>
+        <div class="compare-tower"><b>العدد الثاني</b><strong>${formatN(q.b)}</strong></div>
+      </div>
+      <div class="compare-tip">${q.prompt}</div>
+    </div>
+
+    <div class="compare-choice-grid" id="quizOptions">
+      ${q.options.map(sym=>`<button class="option compare-choice" data-answer="${sym}">${sym}</button>`).join("")}
+    </div>
+    <div class="cta-row"><button class="btn secondary" id="hintBtn">💡 ساعدني</button><button class="btn hidden" id="nextQ">التالي</button></div>
+    <div id="quizHint" class="hint-box" hidden></div>
+    <div id="quizFeedback" class="compare-fix-box" hidden></div>
+  </article>`;
+  $$("#quizOptions .compare-choice").forEach(b=>b.onclick=()=>answerCompareQuiz(b,q));
+  $("#hintBtn").onclick=()=>{const h=$("#quizHint");h.hidden=false;h.textContent=q.hint;};
+  $("#nextQ").onclick=()=>{state.quiz.index++;state.quiz.answered=false;renderQuiz();};
+}
+function answerCompareQuiz(btn,q){
+  if(state.quiz.answered)return;
+  state.quiz.answered=true;
+  const ok=btn.dataset.answer===q.answer;
+  if(ok) state.quiz.score++;
+  btn.classList.add(ok?"correct":"wrong");
+  $$("#quizOptions .compare-choice").forEach(b=>{ if(b.dataset.answer===q.answer) b.classList.add("correct"); });
+  const f=$("#quizFeedback");
+  f.hidden=false;
+  f.innerHTML= ok
+    ? `<strong>أحسنت 🌟</strong> ${q.explain}`
+    : `<strong>راجع المنازل</strong><br>${q.explain}`;
+  $("#nextQ").classList.remove("hidden");
+}
+function renderOrderQuiz(qz,q){
+  $("#skillPanel").innerHTML=`<article class="order-game-card">
+    <div class="order-head">
+      <div>
+        <span class="eyebrow">🏁 ${qz.type==="challenge"?"تحدّي مضمار الترتيب":"تدريب مضمار الترتيب"}</span>
+        <h3>${qz.type==="challenge"?"سباق الترتيب الذهبي":"مضمار الترتيب"}</h3>
+        <p>${qz.type==="challenge"?"اختر المسار الصحيح بسرعة لتفوز السيارات الرقمية.":"انظر إلى بطاقات الأعداد في خط البداية، ثم اختر الترتيب الصحيح."}</p>
+      </div>
+      <div class="order-meta">
+        <span>${qz.type==="challenge"?"🏆 تحدّي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span>
+        <span>⭐ النقاط: ${arNum(qz.score)}</span>
+      </div>
+    </div>
+
+    <div class="order-scene-box">
+      <div class="compare-tip"><b>${q.prompt}</b></div>
+      <div class="order-start-grid">
+        ${q.nums.map(n=>`<div class="order-chip">${formatN(n)}</div>`).join("")}
+      </div>
+      <div class="order-tip">اختر مسار الترتيب الصحيح من الخيارات الآتية.</div>
+    </div>
+
+    <div class="lane-choice-grid" id="quizOptions">
+      ${q.options.map(line=>`<button class="lane-choice" data-answer="${line.replaceAll('"','&quot;')}">${line}</button>`).join("")}
+    </div>
+    <div class="cta-row"><button class="btn secondary" id="hintBtn">💡 ساعدني</button><button class="btn hidden" id="nextQ">التالي</button></div>
+    <div id="quizHint" class="hint-box" hidden></div>
+    <div id="quizFeedback" class="order-fix-box" hidden></div>
+  </article>`;
+  $$("#quizOptions .lane-choice").forEach(b=>b.onclick=()=>answerOrderQuiz(b,q));
+  $("#hintBtn").onclick=()=>{const h=$("#quizHint");h.hidden=false;h.textContent=q.hint;};
+  $("#nextQ").onclick=()=>{state.quiz.index++;state.quiz.answered=false;renderQuiz();};
+}
+function answerOrderQuiz(btn,q){
+  if(state.quiz.answered)return;
+  state.quiz.answered=true;
+  const ok=btn.dataset.answer===q.answer;
+  if(ok) state.quiz.score++;
+  btn.classList.add(ok?"correct":"wrong");
+  $$("#quizOptions .lane-choice").forEach(b=>{ if(b.dataset.answer===q.answer) b.classList.add("correct"); });
+  const f=$("#quizFeedback");
+  f.hidden=false;
+  f.innerHTML = ok
+    ? `<strong>أحسنت 🌟</strong> ${q.explain}`
+    : `<strong>أعد المقارنة</strong><br>${q.explain}`;
+  $("#nextQ").classList.remove("hidden");
+}
+function makeCompareErrorCase(){
+  const a=rand(1100,9999), b=Math.random()<.2?a:rand(1100,9999);
+  const correct=a===b?"=":a>b?">":"<";
+  let wrong = correct===">"?"<":correct==="<"?">":"<";
+  return {a,b,correct,wrong,reason:compareReason(a,b)};
+}
+function renderCompareErrorGame(){
+  state.compareError = makeCompareErrorCase();
+  const g=state.compareError;
+  return `<article class="compare-error-card">
+    <span class="eyebrow">🩺 عيادة المقارنة</span>
+    <h3>أصلح جسر المقارنة</h3>
+    <p>اختار طالب الرمز الخطأ. حدّد الرمز الصحيح لإصلاح الجسر.</p>
+    <div class="compare-scene-box">
+      <div class="compare-board">
+        <div class="compare-tower"><b>العدد الأول</b><strong>${formatN(g.a)}</strong></div>
+        <div class="compare-bridge">
+          <div class="big-symbol">${g.wrong}</div>
+          <small>رمز الطالب</small>
+        </div>
+        <div class="compare-tower"><b>العدد الثاني</b><strong>${formatN(g.b)}</strong></div>
+      </div>
+      <div class="compare-tip">قال الطالب إن الرمز الصحيح هو <b>${g.wrong}</b>. هل هذا صحيح؟ اختر الرمز الصحيح.</div>
+    </div>
+    <div class="compare-choice-grid">
+      ${[">","<","="].map(sym=>`<button class="option compare-choice" data-compare-error-pick="${sym}">${sym}</button>`).join("")}
+    </div>
+    <div class="compare-fix-box" id="compareErrorFeedback">💡 ابدأ من أكبر منزلة، ثم ابحث عن أول اختلاف بين العددين.</div>
+    <div class="cta-row">
+      <button class="btn secondary" id="revealCompareFix">أظهر التصحيح</button>
+      <button class="btn" id="newCompareError">جولة جديدة</button>
+    </div>
+    <div class="compare-fix-box" id="compareErrorFix" hidden></div>
+  </article>`;
+}
+function makeOrderErrorCase(){
+  const nums=shuffle([rand(1100,2800),rand(2801,4700),rand(4701,6800),rand(6801,9400)]);
+  const askAsc=Math.random()<.5;
+  const correct=askAsc?[...nums].sort((a,b)=>a-b):[...nums].sort((a,b)=>b-a);
+  const wrong=[...correct];
+  [wrong[1], wrong[2]] = [wrong[2], wrong[1]];
+  const options=[correct, wrong, shuffle(nums), [...correct].reverse()]
+    .map(arr=>arr.map(n=>formatN(n)).join(" ، "))
+    .filter((v,i,a)=>a.indexOf(v)===i)
+    .slice(0,4);
+  return {
+    nums,
+    askAsc,
+    correctText: correct.map(n=>formatN(n)).join(" ، "),
+    wrongText: wrong.map(n=>formatN(n)).join(" ، "),
+    options
+  };
+}
+function renderOrderErrorGame(){
+  state.orderError = makeOrderErrorCase();
+  const g=state.orderError;
+  return `<article class="order-error-card">
+    <span class="eyebrow">🩺 عيادة الترتيب</span>
+    <h3>أصلح مسار الترتيب</h3>
+    <p>أعطى أحد الطلاب ترتيبًا غير صحيح. اختر الترتيب الصحيح لإصلاح المسار.</p>
+    <div class="order-scene-box">
+      <div class="compare-tip"><b>الأعداد:</b> ${g.nums.map(n=>formatN(n)).join(" ، ")}</div>
+      <div class="order-tip">قال الطالب إن الترتيب ${g.askAsc?"من الأصغر إلى الأكبر":"من الأكبر إلى الأصغر"} هو:<br><b>${g.wrongText}</b></div>
+    </div>
+    <div class="lane-choice-grid">
+      ${g.options.map(line=>`<button class="lane-choice" data-order-error-pick="${line.replaceAll('"','&quot;')}">${line}</button>`).join("")}
+    </div>
+    <div class="order-fix-box" id="orderErrorFeedback">💡 قارن أكبر منزلة أولًا، ثم انتقل إلى المنزلة التالية عند التساوي.</div>
+    <div class="cta-row">
+      <button class="btn secondary" id="revealOrderFix">أظهر التصحيح</button>
+      <button class="btn" id="newOrderError">جولة جديدة</button>
+    </div>
+    <div class="order-fix-box" id="orderErrorFix" hidden></div>
+  </article>`;
+}
+
 function normalizeAnswer(v){return typeof v==="number"?String(v):String(v);}
 function startQuiz(type="practice"){
   const count=type==="challenge"?7:5;
@@ -1267,6 +1512,8 @@ function renderQuiz(){
   if(state.skill.id==="patterns"){ renderPatternQuiz(qz,q); return; }
   if(state.skill.id==="solve"){ renderSolveQuiz(qz,q); return; }
   if(["place","thousands","tenThousands"].includes(state.skill.id)){ renderPlaceQuiz(qz,q); return; }
+  if(state.skill.id==="compare"){ renderCompareQuiz(qz,q); return; }
+  if(state.skill.id==="order"){ renderOrderQuiz(qz,q); return; }
   $("#skillPanel").innerHTML=`<article class="practice-card">
     <div class="quiz-meta"><span>${qz.type==="challenge"?"🏆 تحدي":"🎯 تدريب"} ${arNum(qz.index+1)} / ${arNum(qz.count)}</span><span>النقاط: ${arNum(qz.score)}</span></div>
     <div class="question">${q.prompt}</div>
@@ -1282,6 +1529,8 @@ function answerQuiz(btn,q){
   if(state.skill.id==="patterns"){ answerPatternQuiz(btn,q); return; }
   if(state.skill.id==="solve"){ answerSolveQuiz(btn,q); return; }
   if(["place","thousands","tenThousands"].includes(state.skill.id)){ answerPlaceQuiz(btn,q); return; }
+  if(state.skill.id==="compare"){ answerCompareQuiz(btn,q); return; }
+  if(state.skill.id==="order"){ answerOrderQuiz(btn,q); return; }
   if(state.quiz.answered)return;
   state.quiz.answered=true;
   const raw=btn.dataset.answer, right=normalizeAnswer(q.answer), isNum=typeof q.answer==="number", ok=isNum?+raw===+q.answer:raw===right;
@@ -1311,6 +1560,8 @@ function renderError(s){
   if(s.id==="patterns") return renderPatternErrorGame();
   if(s.id==="solve") return renderSolveErrorGame();
   if(["place","thousands","tenThousands"].includes(s.id)) return renderPlaceErrorGame(s);
+  if(s.id==="compare") return renderCompareErrorGame();
+  if(s.id==="order") return renderOrderErrorGame();
   const e=s.teacher.error;
   let claim="";
   if(s.id==="place") claim="في العدد ٤٢٥، قيمة الرقم ٢ هي ٢.";
@@ -1514,7 +1765,7 @@ $("#newMascotMessage")?.addEventListener("click", ()=> {
 });
 
 
-/* V1.7: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
+/* V1.8: تنظيف أي Service Worker / Cache قديم حتى تظهر التحديثات فورًا */
 async function clearLegacyAppCache(){
   try{
     if("serviceWorker" in navigator){
@@ -1525,10 +1776,10 @@ async function clearLegacyAppCache(){
       const keys = await caches.keys();
       await Promise.all(keys.map(k=>caches.delete(k)));
     }
-    const flagKey="cityNumbersCacheReset_170";
+    const flagKey="cityNumbersCacheReset_180";
     if(!sessionStorage.getItem(flagKey)){
       sessionStorage.setItem(flagKey,"1");
-      console.log("City Numbers V1.7 cache cleaned.");
+      console.log("City Numbers V1.8 cache cleaned.");
     }
   }catch(e){
     console.warn("Cache cleanup skipped", e);
